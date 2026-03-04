@@ -1,0 +1,108 @@
+{
+  "projectType": "saas",
+  "projectName": "HCMatrix",
+  "projectDescription": "A comprehensive HR management platform for managing employees, attendance, payroll, recruitment, and organizational operations",
+  "theme": "linden",
+  "primaryColor": "#787878",
+  "lightColor": "#4a4a4a",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/dashboard",
+              "features/employee-management",
+              "features/attendance-tracking",
+              "features/payroll-management",
+              "features/recruitment",
+              "features/calendar-events",
+              "features/reports-analytics",
+              "features/document-management"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "guides/authentication",
+              "guides/managing-employees",
+              "guides/tracking-attendance",
+              "guides/processing-payroll",
+              "guides/recruiting-workflow",
+              "guides/generating-reports"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/environment-setup",
+              "configuration/api-integration",
+              "configuration/settings"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/overview",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/dashboard",
+              "api/employees",
+              "api/employee-details"
+            ]
+          },
+          {
+            "group": "Data Models",
+            "pages": [
+              "api/models/employee",
+              "api/models/dashboard-data"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Employee management with search and filtering",
+    "Real-time dashboard with organizational metrics",
+    "Attendance tracking and reporting",
+    "Payroll processing and management",
+    "Recruitment pipeline and candidate tracking",
+    "Calendar for events, birthdays, and anniversaries",
+    "Comprehensive reporting and analytics",
+    "Document management system"
+  ],
+  "publicApiSurface": [
+    "api.login(email, password)",
+    "api.logout(token)",
+    "api.getDashboard(token)",
+    "api.getEmployees(token, page, params)",
+    "api.getEmployee(token, id)",
+    "api.searchEmployees(token, query, page)",
+    "auth.saveSession(session)",
+    "auth.getSession()",
+    "auth.clearSession()",
+    "auth.isAuthenticated()",
+    "auth.getToken()"
+  ]
+}
