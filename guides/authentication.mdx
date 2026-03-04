@@ -1,0 +1,173 @@
+---
+title: Authentication Guide
+description: Learn how to authenticate and manage user sessions in HCMatrix
+---
+
+## Overview
+
+HCMatrix uses token-based authentication to secure access to the platform. This guide walks you through the login process, session management, and logout workflows.
+
+## Logging In
+
+<Steps>
+  <Step title="Navigate to Login Page">
+    Access the HCMatrix login page at `/auth/login`. You'll see a modern login interface with email and password fields.
+  </Step>
+
+  <Step title="Enter Credentials">
+    Provide your company email address and password. The system validates both fields are required before submission.
+
+    ```tsx
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    ```
+  </Step>
+
+  <Step title="Submit Login Request">
+    When you click "Sign In", the application calls the authentication API:
+
+    ```typescript
+    // From: ~/workspace/source/lib/api.ts:188-193
+    async login(email: string, password: string): Promise<LoginResponse> {
+      return apiCall<LoginResponse>('/api/auth/login', 'POST', {
+        email,
+        password,
+      })
+    }
+    ```
+  </Step>
+
+  <Step title="Session Storage">
+    Upon successful authentication, the system stores your session in browser localStorage:
+
+    ```typescript
+    // From: ~/workspace/source/lib/auth.ts:13-17
+    saveSession(session: AuthSession): void {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+      }
+    }
+    ```
+
+    The session contains:
+    - **token**: Your authentication token for API requests
+    - **user**: Your user profile (id, name, email)
+  </Step>
+
+  <Step title="Redirect to Dashboard">
+    After successful login, you're automatically redirected to `/dashboard` where you can access all HCMatrix features.
+  </Step>
+</Steps>
+
+## Session Management
+
+### Checking Authentication Status
+
+The system automatically checks if you're authenticated before allowing access to protected pages:
+
+```typescript
+// From: ~/workspace/source/lib/auth.ts:33-35
+isAuthenticated(): boolean {
+  return this.getSession() !== null
+}
+```
+
+### Retrieving Session Data
+
+Your session is retrieved from localStorage when needed:
+
+```typescript
+// From: ~/workspace/source/lib/auth.ts:19-25
+getSession(): AuthSession | null {
+  if (typeof window !== 'undefined') {
+    const session = localStorage.getItem(SESSION_KEY)
+    return session ? JSON.parse(session) : null
+  }
+  return null
+}
+```
+
+### Getting Authentication Token
+
+API requests automatically include your authentication token:
+
+```typescript
+// From: ~/workspace/source/lib/auth.ts:37-39
+getToken(): string | null {
+  return this.getSession()?.token || null
+}
+```
+
+## Logging Out
+
+To log out of HCMatrix:
+
+<Steps>
+  <Step title="Call Logout API">
+    The logout function notifies the server and invalidates your token:
+
+    ```typescript
+    // From: ~/workspace/source/lib/api.ts:196-198
+    async logout(token: string): Promise<void> {
+      await apiCall('/api/v1/logout', 'POST', {}, token)
+    }
+    ```
+  </Step>
+
+  <Step title="Clear Local Session">
+    Your session is removed from browser storage:
+
+    ```typescript
+    // From: ~/workspace/source/lib/auth.ts:27-31
+    clearSession(): void {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(SESSION_KEY)
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Redirect to Login">
+    You're automatically redirected back to the login page.
+  </Step>
+</Steps>
+
+## Error Handling
+
+The login page displays error messages when authentication fails:
+
+```tsx
+// From: ~/workspace/source/app/auth/login/page.tsx:31-32
+catch (err) {
+  setError(err instanceof Error ? err.message : 'Login failed')
+}
+```
+
+Common error scenarios:
+- Invalid email or password
+- Network connectivity issues
+- Server unavailable
+
+<Warning>
+  If you see "API error" messages, contact your system administrator. These typically indicate server-side issues that require technical support.
+</Warning>
+
+## Alternative Login Methods
+
+HCMatrix also supports Google OAuth for streamlined authentication. Contact your administrator to enable this feature for your organization.
+
+## Security Best Practices
+
+<Note>
+  - Never share your authentication token with others
+  - Always log out when using shared computers
+  - Your session is stored in localStorage and persists until you log out
+  - Tokens are automatically included in API requests via Bearer authentication
+</Note>
+
+## Next Steps
+
+After logging in, explore these guides:
+- [Managing Employees](/guides/managing-employees) - Add and manage your workforce
+- [Tracking Attendance](/guides/tracking-attendance) - Monitor employee time and attendance
+- [Processing Payroll](/guides/processing-payroll) - Handle payroll operations

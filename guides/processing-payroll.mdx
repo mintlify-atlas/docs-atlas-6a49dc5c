@@ -1,0 +1,333 @@
+---
+title: Processing Payroll
+description: Complete guide to managing payroll operations in HCMatrix
+---
+
+## Overview
+
+The Payroll module in HCMatrix streamlines compensation management, salary processing, and payroll reporting. This comprehensive system integrates with employee records and attendance data to ensure accurate payroll processing.
+
+## Accessing Payroll
+
+<Steps>
+  <Step title="Navigate to Payroll Module">
+    Access the Payroll section from the main navigation sidebar. The system verifies your authentication status:
+
+    ```typescript
+    // From: ~/workspace/source/app/payroll/page.tsx:12-16
+    useEffect(() => {
+      if (!auth.getToken()) {
+        router.push('/auth/login')
+      }
+    }, [router])
+    ```
+  </Step>
+
+  <Step title="Authentication Validation">
+    Only authenticated users with valid tokens can access payroll data. Unauthorized users are automatically redirected to the login page.
+  </Step>
+</Steps>
+
+## Current Implementation
+
+The payroll module uses the standard HCMatrix layout architecture:
+
+```tsx
+// From: ~/workspace/source/app/payroll/page.tsx:18-31
+return (
+  <div className="min-h-screen bg-gray-50">
+    <Sidebar />
+    <div className="ml-64 flex flex-col min-h-screen">
+      <Header title="Payroll" />
+      <main className="flex-1 p-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <p className="text-gray-600">Payroll module coming soon...</p>
+        </div>
+      </main>
+    </div>
+  </div>
+)
+```
+
+<Note>
+  The Payroll module is under active development. Advanced payroll processing features, tax calculations, and reporting capabilities are being built.
+</Note>
+
+## Planned Features
+
+The upcoming Payroll module will provide comprehensive compensation management:
+
+### Salary Management
+- Employee salary records and history
+- Compensation adjustments and raises
+- Bonus and commission tracking
+- Multi-currency support
+
+### Payroll Processing
+- Automated payroll runs
+- Pay period configuration (weekly, bi-weekly, monthly)
+- Overtime calculations
+- Deduction management
+
+### Tax & Compliance
+- Automatic tax calculations
+- Tax withholding management
+- Compliance with local regulations
+- Year-end tax reporting (W-2, 1099, etc.)
+
+### Payment Methods
+- Direct deposit setup
+- Check printing
+- Payment history tracking
+- Failed payment handling
+
+## Employee Compensation Data
+
+Employee salary information is already tracked in the employee detail records:
+
+```typescript
+// From: ~/workspace/source/lib/api.ts:49-62
+export interface EmployeeDetail extends Employee {
+  phone: string
+  date_of_birth: string
+  address: string
+  salary: number  // Current employee salary
+  manager: string
+  manager_id: number
+  next_of_kin_name: string
+  next_of_kin_relationship: string
+  next_of_kin_phone: string
+  tenure_years: number
+  tenure_months: number
+  spouse: string | null
+}
+```
+
+### Accessing Salary Information
+
+```typescript
+// From: ~/workspace/source/lib/api.ts:129-145
+function mapEmployeeDetail(raw: any): EmployeeDetail {
+  return {
+    ...mapEmployee(raw),
+    phone: raw.phone || raw.phone_number || '',
+    date_of_birth: raw.dob || raw.date_of_birth || '',
+    address: raw.address || '',
+    salary: raw.current_salary ?? raw.salary ?? 0,  // Salary mapping
+    manager: raw.manager || '',
+    manager_id: raw.manager_id || 0,
+    next_of_kin_name: raw.next_of_kin || raw.next_of_kin_name || '',
+    next_of_kin_relationship: raw.next_of_kin_relationship || raw.relationship || '',
+    next_of_kin_phone: raw.phone_no_nok || raw.next_of_kin_phone || '',
+    tenure_years: raw.tenure_years ?? 0,
+    tenure_months: raw.tenure_months ?? 0,
+    spouse: raw.spouse || null,
+  }
+}
+```
+
+## Integration with Other Modules
+
+Payroll integrates with multiple HCMatrix systems:
+
+### Employee Management
+- Pull salary data from employee records
+- Update compensation history
+- Track employment status changes
+- Link payroll to employee profiles
+
+### Attendance Tracking
+- Import hours worked from time cards
+- Calculate overtime automatically
+- Process PTO and leave balances
+- Verify attendance for payroll accuracy
+
+### Reporting
+- Generate payroll summaries
+- Export tax reports
+- Analyze compensation trends
+- Audit payroll history
+
+## Planned API Structure
+
+The payroll API will follow HCMatrix conventions:
+
+```typescript
+// Example future API endpoints
+export const api = {
+  // Run payroll for a pay period
+  async runPayroll(
+    token: string,
+    startDate: string,
+    endDate: string
+  ): Promise<PayrollRun> {
+    return apiCall<PayrollRun>('/api/v1/payroll/run', 'POST',
+      { start_date: startDate, end_date: endDate },
+      token
+    )
+  },
+
+  // Get payroll records for an employee
+  async getEmployeePayroll(
+    token: string,
+    employeeId: number,
+    year?: number
+  ): Promise<PayrollRecord[]> {
+    const params = year ? { employee_id: employeeId, year } : { employee_id: employeeId }
+    const queryString = new URLSearchParams(params as any).toString()
+    return apiCall<PayrollRecord[]>(
+      `/api/v1/payroll/employee?${queryString}`,
+      'GET',
+      undefined,
+      token
+    )
+  },
+
+  // Update employee compensation
+  async updateSalary(
+    token: string,
+    employeeId: number,
+    newSalary: number,
+    effectiveDate: string
+  ): Promise<SalaryUpdate> {
+    return apiCall<SalaryUpdate>(
+      `/api/v1/payroll/salary/${employeeId}`,
+      'POST',
+      { salary: newSalary, effective_date: effectiveDate },
+      token
+    )
+  },
+
+  // Process direct deposit
+  async processDirectDeposit(
+    token: string,
+    payrollRunId: number
+  ): Promise<PaymentResult> {
+    return apiCall<PaymentResult>(
+      `/api/v1/payroll/direct-deposit/${payrollRunId}`,
+      'POST',
+      {},
+      token
+    )
+  }
+}
+```
+
+## Data Structures
+
+Planned payroll data interfaces:
+
+```typescript
+export interface PayrollRun {
+  id: number
+  start_date: string
+  end_date: string
+  status: 'draft' | 'processing' | 'completed' | 'failed'
+  total_gross: number
+  total_deductions: number
+  total_net: number
+  employee_count: number
+  created_at: string
+  processed_at?: string
+}
+
+export interface PayrollRecord {
+  id: number
+  employee_id: number
+  payroll_run_id: number
+  gross_pay: number
+  deductions: Deduction[]
+  net_pay: number
+  payment_method: 'direct_deposit' | 'check'
+  payment_status: 'pending' | 'paid' | 'failed'
+  pay_date: string
+}
+
+export interface Deduction {
+  type: 'tax' | 'insurance' | 'retirement' | 'garnishment' | 'other'
+  description: string
+  amount: number
+  is_percentage: boolean
+}
+
+export interface SalaryUpdate {
+  employee_id: number
+  previous_salary: number
+  new_salary: number
+  effective_date: string
+  reason?: string
+  approved_by?: number
+}
+
+export interface PaymentResult {
+  payroll_run_id: number
+  total_payments: number
+  successful: number
+  failed: number
+  pending: number
+  errors?: PaymentError[]
+}
+
+export interface PaymentError {
+  employee_id: number
+  employee_name: string
+  error_message: string
+}
+```
+
+## Security & Compliance
+
+Payroll data is highly sensitive and requires strict security:
+
+<Warning>
+  All payroll operations require authentication tokens. Access to compensation data should be restricted to authorized HR personnel and system administrators only.
+</Warning>
+
+### Best Practices
+
+- **Data Encryption**: All salary and payment information is encrypted
+- **Access Control**: Role-based permissions limit who can view/edit payroll
+- **Audit Trails**: All payroll changes are logged with user and timestamp
+- **Compliance**: System adheres to labor laws and tax regulations
+- **Backup**: Payroll data is backed up before each processing run
+
+## Payroll Processing Workflow
+
+When the module launches, follow this workflow:
+
+<Steps>
+  <Step title="Collect Time Data">
+    Import attendance and hours worked from the Time & Attendance module
+  </Step>
+
+  <Step title="Verify Employee Data">
+    Ensure all employee records are up-to-date with current salaries and deductions
+  </Step>
+
+  <Step title="Run Payroll Calculation">
+    Execute the payroll run for the pay period, calculating gross pay, taxes, and deductions
+  </Step>
+
+  <Step title="Review & Approve">
+    Review payroll summary for accuracy and get manager approval
+  </Step>
+
+  <Step title="Process Payments">
+    Submit direct deposits or generate checks for employees
+  </Step>
+
+  <Step title="Generate Reports">
+    Create payroll reports for accounting, tax filing, and record-keeping
+  </Step>
+</Steps>
+
+<Tip>
+  Schedule payroll processing 2-3 days before pay date to account for bank processing times and allow for error correction.
+</Tip>
+
+## Next Steps
+
+- [Managing Employees](/guides/managing-employees) - Update employee compensation
+- [Tracking Attendance](/guides/tracking-attendance) - Import time cards
+- [Generating Reports](/guides/generating-reports) - Create payroll reports
+- [Authentication Guide](/guides/authentication) - Secure access to payroll data

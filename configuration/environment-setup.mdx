@@ -1,0 +1,311 @@
+---
+title: Environment Setup
+description: Complete guide to setting up your HCMatrix development environment including dependencies, environment variables, and build configuration
+---
+
+## Prerequisites
+
+Before setting up HCMatrix, ensure you have the following installed:
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    Version 18.0 or higher required
+  </Card>
+  <Card title="Package Manager" icon="box">
+    pnpm, npm, or yarn
+  </Card>
+</CardGroup>
+
+## Installation
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the HCMatrix source code to your local machine:
+    
+    ```bash
+    git clone <repository-url>
+    cd hr-platform
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all required packages using your preferred package manager:
+    
+    <CodeGroup>
+      ```bash pnpm
+      pnpm install
+      ```
+      
+      ```bash npm
+      npm install
+      ```
+      
+      ```bash yarn
+      yarn install
+      ```
+    </CodeGroup>
+
+    <Note>
+      The project includes over 50 dependencies including Next.js 16, React 19, and a comprehensive set of Radix UI components.
+    </Note>
+  </Step>
+
+  <Step title="Configure environment variables">
+    Create a `.env.local` file in the root directory:
+    
+    ```bash
+    touch .env.local
+    ```
+    
+    Add the following environment variable:
+    
+    ```bash .env.local
+    API_BASE_URL=https://apitest.hcmatrix.co
+    ```
+
+    <Warning>
+      The `API_BASE_URL` is critical for API proxy functionality. If not set, it defaults to `https://apitest.hcmatrix.co`.
+    </Warning>
+  </Step>
+
+  <Step title="Start the development server">
+    Run the development server:
+    
+    <CodeGroup>
+      ```bash pnpm
+      pnpm dev
+      ```
+      
+      ```bash npm
+      npm run dev
+      ```
+      
+      ```bash yarn
+      yarn dev
+      ```
+    </CodeGroup>
+    
+    The application will be available at [http://localhost:3000](http://localhost:3000)
+  </Step>
+</Steps>
+
+## Environment Variables
+
+### Required Variables
+
+<ParamField path="API_BASE_URL" type="string" default="https://apitest.hcmatrix.co">
+  Base URL for the backend API server. All API requests are proxied through `/api/proxy/` to this endpoint.
+  
+  **Example:**
+  ```bash
+  API_BASE_URL=https://api.hcmatrix.co
+  ```
+</ParamField>
+
+### Optional Variables
+
+Currently, HCMatrix uses a minimal environment configuration. Additional variables can be added as needed for:
+
+- Database connections
+- Third-party service integrations
+- Feature flags
+- Analytics tracking
+
+<Note>
+  Environment variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Use this prefix only for non-sensitive configuration.
+</Note>
+
+## TypeScript Configuration
+
+The project uses TypeScript 5.7.3 with strict mode enabled. Key compiler options from `tsconfig.json:2-30`:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "target": "ES6",
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
+}
+```
+
+<Info>
+  The `@/*` path alias allows you to import from the root directory. For example: `import { api } from '@/lib/api'`
+</Info>
+
+## Next.js Configuration
+
+The application uses Next.js 16 with App Router. Configuration from `next.config.mjs:2-9`:
+
+```javascript next.config.mjs
+const nextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  images: {
+    unoptimized: true,
+  },
+}
+```
+
+<Warning>
+  **TypeScript build errors are currently ignored.** This is a development convenience but should be addressed before production deployment.
+</Warning>
+
+### Image Optimization
+
+Images are served unoptimized (`unoptimized: true`). This configuration is suitable for static exports but may impact performance in production.
+
+## Styling Configuration
+
+### Tailwind CSS
+
+HCMatrix uses Tailwind CSS v4.2 with custom design tokens. The styling system includes:
+
+- **CSS Variables**: Theme colors defined in `globals.css` using OKLCH color space
+- **Dark Mode**: Full dark mode support with `.dark` class
+- **Custom Radius**: Border radius defined via `--radius` variable (0.625rem)
+
+### PostCSS Configuration
+
+From `postcss.config.mjs:2-6`:
+
+```javascript postcss.config.mjs
+const config = {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+}
+```
+
+### shadcn/ui Components
+
+The project uses shadcn/ui components configured in `components.json:1-21`:
+
+```json components.json
+{
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "css": "app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "iconLibrary": "lucide"
+}
+```
+
+## Available Scripts
+
+From `package.json:5-10`:
+
+<CodeGroup>
+  ```bash Development
+  npm run dev
+  # Starts Next.js development server with hot reload
+  ```
+
+  ```bash Build
+  npm run build
+  # Creates optimized production build
+  ```
+
+  ```bash Production
+  npm start
+  # Runs production server (requires build first)
+  ```
+
+  ```bash Lint
+  npm run lint
+  # Runs ESLint for code quality checks
+  ```
+</CodeGroup>
+
+## Key Dependencies
+
+### Framework & Core
+
+- **Next.js 16.1.6**: React framework with App Router
+- **React 19.2.4**: UI library with server components
+- **TypeScript 5.7.3**: Type safety and developer experience
+
+### UI Components
+
+- **Radix UI**: 25+ accessible component primitives
+- **Lucide React**: Icon library
+- **Tailwind CSS 4.2**: Utility-first CSS framework
+
+### Form & Validation
+
+- **react-hook-form 7.54.1**: Form state management
+- **zod 3.24.1**: Schema validation
+- **@hookform/resolvers 3.9.1**: Form validation integration
+
+### Utilities
+
+- **date-fns 4.1.0**: Date manipulation
+- **recharts 2.15.0**: Chart visualization
+- **next-themes 0.4.6**: Theme management
+- **sonner 1.7.1**: Toast notifications
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port 3000 already in use">
+    Change the port by running:
+    ```bash
+    PORT=3001 npm run dev
+    ```
+  </Accordion>
+
+  <Accordion title="Module not found errors">
+    Clear cache and reinstall dependencies:
+    ```bash
+    rm -rf node_modules .next
+    npm install
+    ```
+  </Accordion>
+
+  <Accordion title="API connection failed">
+    Verify `API_BASE_URL` in `.env.local` is correct and the backend server is accessible.
+  </Accordion>
+
+  <Accordion title="TypeScript errors during build">
+    Build errors are currently ignored in `next.config.mjs`. To see them:
+    1. Set `ignoreBuildErrors: false`
+    2. Run `npm run build`
+    3. Fix reported type errors
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Integration" icon="plug" href="/configuration/api-integration">
+    Learn how to configure API endpoints and authentication
+  </Card>
+  <Card title="Settings" icon="gear" href="/configuration/settings">
+    Configure platform settings and preferences
+  </Card>
+</CardGroup>

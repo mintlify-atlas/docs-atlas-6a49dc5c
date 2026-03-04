@@ -1,0 +1,265 @@
+---
+title: 'DashboardData Model'
+description: 'TypeScript interface for dashboard metrics and statistics'
+---
+
+## DashboardData
+
+Dashboard metrics and key statistics for the HR management system.
+
+### Interface
+
+```typescript
+interface DashboardData {
+  total_employees: number
+  new_hire_count: number
+  upcoming_event: number
+  open_positions: number
+}
+```
+
+### Fields
+
+<ParamField path="total_employees" type="number" required>
+  Total number of employees in the organization
+  
+  This count typically includes all active employees across all departments and locations.
+</ParamField>
+
+<ParamField path="new_hire_count" type="number" required>
+  Number of new hires
+  
+  This metric represents employees who have recently joined the organization, typically within a specific time period (e.g., last 30 days, current quarter).
+</ParamField>
+
+<ParamField path="upcoming_event" type="number" required>
+  Number of upcoming events
+  
+  Count of scheduled HR-related events such as:
+  - Onboarding sessions
+  - Training programs
+  - Company meetings
+  - Team building activities
+  - Performance reviews
+</ParamField>
+
+<ParamField path="open_positions" type="number" required>
+  Number of open job positions
+  
+  Active job openings currently being recruited for across the organization.
+</ParamField>
+
+### Default Values
+
+The API client ensures all fields have default values when the API response is incomplete:
+
+```typescript
+{
+  total_employees: data.total_employees ?? 0,
+  new_hire_count: data.new_hire_count ?? 0,
+  upcoming_event: data.upcoming_event ?? 0,
+  open_positions: data.open_positions ?? 0,
+}
+```
+
+### Example
+
+```json
+{
+  "total_employees": 150,
+  "new_hire_count": 5,
+  "upcoming_event": 3,
+  "open_positions": 8
+}
+```
+
+### Usage
+
+```typescript
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+import type { DashboardData } from '@/lib/api'
+
+async function displayDashboard() {
+  const token = auth.getToken()
+  if (!token) return
+  
+  const dashboard: DashboardData = await api.getDashboard(token)
+  
+  console.log('=== HR Dashboard ===')
+  console.log(`Total Employees: ${dashboard.total_employees}`)
+  console.log(`New Hires: ${dashboard.new_hire_count}`)
+  console.log(`Upcoming Events: ${dashboard.upcoming_event}`)
+  console.log(`Open Positions: ${dashboard.open_positions}`)
+  
+  // Calculate additional metrics
+  const growthRate = (dashboard.new_hire_count / dashboard.total_employees) * 100
+  console.log(`\nGrowth Rate: ${growthRate.toFixed(2)}%`)
+}
+```
+
+### React Component Example
+
+```typescript
+import { useEffect, useState } from 'react'
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+import type { DashboardData } from '@/lib/api'
+
+export default function DashboardMetrics() {
+  const [metrics, setMetrics] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      const token = auth.getToken()
+      if (!token) return
+      
+      try {
+        const data = await api.getDashboard(token)
+        setMetrics(data)
+      } catch (error) {
+        console.error('Error loading dashboard:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchDashboard()
+  }, [])
+  
+  if (loading) return <div>Loading dashboard...</div>
+  if (!metrics) return <div>No data available</div>
+  
+  return (
+    <div className="dashboard-grid">
+      <MetricCard 
+        title="Total Employees" 
+        value={metrics.total_employees}
+        icon="users"
+      />
+      <MetricCard 
+        title="New Hires" 
+        value={metrics.new_hire_count}
+        icon="user-plus"
+        trend="up"
+      />
+      <MetricCard 
+        title="Upcoming Events" 
+        value={metrics.upcoming_event}
+        icon="calendar"
+      />
+      <MetricCard 
+        title="Open Positions" 
+        value={metrics.open_positions}
+        icon="briefcase"
+      />
+    </div>
+  )
+}
+
+function MetricCard({ title, value, icon, trend }: {
+  title: string
+  value: number
+  icon: string
+  trend?: 'up' | 'down'
+}) {
+  return (
+    <div className="metric-card">
+      <div className="metric-icon">{icon}</div>
+      <h3>{title}</h3>
+      <div className="metric-value">
+        {value.toLocaleString()}
+        {trend && <span className={`trend-${trend}`}>↑</span>}
+      </div>
+    </div>
+  )
+}
+```
+
+### Advanced Usage: Dashboard Analytics
+
+```typescript
+import type { DashboardData } from '@/lib/api'
+
+interface DashboardAnalytics extends DashboardData {
+  // Derived metrics
+  new_hire_percentage: number
+  recruiting_efficiency: number
+  avg_events_per_employee: number
+}
+
+function calculateAnalytics(data: DashboardData): DashboardAnalytics {
+  return {
+    ...data,
+    new_hire_percentage: data.total_employees > 0 
+      ? (data.new_hire_count / data.total_employees) * 100 
+      : 0,
+    recruiting_efficiency: data.open_positions > 0
+      ? (data.new_hire_count / data.open_positions) * 100
+      : 0,
+    avg_events_per_employee: data.total_employees > 0
+      ? data.upcoming_event / data.total_employees
+      : 0
+  }
+}
+
+// Usage
+const dashboardData = await api.getDashboard(token)
+const analytics = calculateAnalytics(dashboardData)
+
+console.log(`New hire percentage: ${analytics.new_hire_percentage.toFixed(2)}%`)
+console.log(`Recruiting efficiency: ${analytics.recruiting_efficiency.toFixed(2)}%`)
+console.log(`Events per employee: ${analytics.avg_events_per_employee.toFixed(2)}`)
+```
+
+### API Response Format
+
+The raw API response may be wrapped in a success object:
+
+```json
+{
+  "success": true,
+  "data": {
+    "total_employees": 150,
+    "new_hire_count": 5,
+    "upcoming_event": 3,
+    "open_positions": 8
+  }
+}
+```
+
+The `getDashboard` method automatically extracts the data object:
+
+```typescript
+const response = await apiCall<any>('/api/v1/dashboard', 'GET', undefined, token)
+const data = response.data || response
+```
+
+### Type Guards
+
+```typescript
+function isDashboardData(data: any): data is DashboardData {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    typeof data.total_employees === 'number' &&
+    typeof data.new_hire_count === 'number' &&
+    typeof data.upcoming_event === 'number' &&
+    typeof data.open_positions === 'number'
+  )
+}
+
+// Usage
+const response = await api.getDashboard(token)
+if (isDashboardData(response)) {
+  console.log('Valid dashboard data received')
+} else {
+  console.error('Invalid dashboard data format')
+}
+```
+
+## Related
+
+- [Dashboard API](/api/dashboard) - Get dashboard endpoint documentation
+- [Authentication](/api/authentication) - How to obtain tokens

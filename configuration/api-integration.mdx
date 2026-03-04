@@ -1,0 +1,612 @@
+---
+title: API Integration
+description: Configure and use the HCMatrix API proxy, connect to backend services, and handle authentication
+---
+
+## Overview
+
+HCMatrix uses a **proxy-based API architecture** to avoid CORS issues and centralize backend communication. All API requests flow through Next.js API routes that proxy to the backend server.
+
+<Info>
+  The API proxy is implemented in `/app/api/proxy/[...path]/route.ts` and automatically forwards requests to the configured backend.
+</Info>
+
+## Architecture
+
+```mermaid
+graph LR
+    A[Frontend Component] --> B[lib/api.ts]
+    B --> C[/api/proxy/*]
+    C --> D[Backend API]
+    D --> C
+    C --> B
+    B --> A
+```
+
+### Why Use a Proxy?
+
+<CardGroup cols={2}>
+  <Card title="CORS Prevention" icon="shield">
+    Eliminates cross-origin request issues
+  </Card>
+  <Card title="Centralized Config" icon="server">
+    Single point for API configuration
+  </Card>
+  <Card title="Security" icon="lock">
+    Hide backend URLs from client
+  </Card>
+  <Card title="Request Control" icon="sliders">
+    Modify requests/responses as needed
+  </Card>
+</CardGroup>
+
+## Configuration
+
+### Backend URL Setup
+
+Configure the backend API URL in `.env.local`:
+
+```bash .env.local
+API_BASE_URL=https://apitest.hcmatrix.co
+```
+
+<Warning>
+  This is a **server-side only** variable. It is not exposed to the browser, keeping your backend URL private.
+</Warning>
+
+### Default Configuration
+
+From `app/api/proxy/[...path]/route.ts:3`:
+
+```typescript
+const API_BASE_URL = process.env.API_BASE_URL || 'https://apitest.hcmatrix.co'
+```
+
+If `API_BASE_URL` is not set, requests default to `https://apitest.hcmatrix.co`.
+
+## API Proxy Implementation
+
+The proxy route handles all HTTP methods and forwards them to the backend. From `app/api/proxy/[...path]/route.ts:5-58`:
+
+```typescript route.ts
+async function proxyRequest(req: NextRequest) {
+  // Extract the path after /api/proxy/
+  const url = new URL(req.url)
+  const pathSegments = url.pathname.replace('/api/proxy/', '')
+  const targetUrl = `${API_BASE_URL}/${pathSegments}${url.search}`
+
+  const headers: HeadersInit = {
+    'Accept': 'application/json',
+  }
+
+  // Forward the Authorization header if present
+  const authHeader = req.headers.get('Authorization')
+  if (authHeader) {
+    headers['Authorization'] = authHeader
+  }
+
+  const fetchOptions: RequestInit = {
+    method: req.method,
+    headers,
+  }
+
+  // Forward the body for POST/PUT/PATCH requests
+  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    headers['Content-Type'] = 'application/json'
+    try {
+      const body = await req.json()
+      fetchOptions.body = JSON.stringify(body)
+    } catch {
+      // No body or invalid JSON — that's fine
+    }
+  }
+
+  try {
+    const response = await fetch(targetUrl, fetchOptions)
+    const contentType = response.headers.get('content-type')
+    let data: any
+
+    if (contentType?.includes('application/json')) {
+      data = await response.json()
+    } else {
+      const text = await response.text()
+      data = { message: text }
+    }
+
+    return NextResponse.json(data, { status: response.status })
+  } catch (error) {
+    console.error('Proxy error:', error)
+    return NextResponse.json(
+      { message: 'Failed to connect to API server' },
+      { status: 502 }
+    )
+  }
+}
+```
+
+### Supported HTTP Methods
+
+The proxy supports all standard HTTP methods from `route.ts:60-78`:
+
+<CodeGroup>
+  ```typescript GET
+  export async function GET(req: NextRequest) {
+    return proxyRequest(req)
+  }
+  ```
+
+  ```typescript POST
+  export async function POST(req: NextRequest) {
+    return proxyRequest(req)
+  }
+  ```
+
+  ```typescript PUT
+  export async function PUT(req: NextRequest) {
+    return proxyRequest(req)
+  }
+  ```
+
+  ```typescript DELETE
+  export async function DELETE(req: NextRequest) {
+    return proxyRequest(req)
+  }
+  ```
+
+  ```typescript PATCH
+  export async function PATCH(req: NextRequest) {
+    return proxyRequest(req)
+  }
+  ```
+</CodeGroup>
+
+## Using the API Client
+
+HCMatrix provides a centralized API client in `lib/api.ts` for all backend communication.
+
+### API Client Setup
+
+From `lib/api.ts:1-110`:
+
+```typescript api.ts
+const PROXY_BASE = '/api/proxy'
+
+async function apiCall<T>(
+  endpoint: string,
+  method: 'GET' | 'POST' = 'GET',
+  body?: Record<string, unknown>,
+  token?: string
+): Promise<T> {
+  const url = `${PROXY_BASE}${endpoint}`
+
+  const headers: HeadersInit = {
+    'Accept': 'application/json',
+  }
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  if (body) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+
+  const contentType = response.headers.get('content-type')
+  let responseData: any
+
+  if (contentType?.includes('application/json')) {
+    responseData = await response.json()
+  } else {
+    const text = await response.text()
+    throw new Error(`API returned non-JSON response: ${response.status}`)
+  }
+
+  if (!response.ok) {
+    const errorMessage =
+      responseData?.message ||
+      responseData?.error ||
+      `API error: ${response.status}`
+    throw new Error(errorMessage)
+  }
+
+  return responseData as T
+}
+```
+
+### Available API Methods
+
+<Tabs>
+  <Tab title="Authentication">
+    #### Login
+    
+    Authenticate a user and receive a token:
+    
+    ```typescript
+    import { api } from '@/lib/api'
+    
+    const response = await api.login('user@example.com', 'password123')
+    // Returns: { user: {...}, token: "..." }
+    ```
+    
+    #### Logout
+    
+    End user session:
+    
+    ```typescript
+    await api.logout(token)
+    ```
+  </Tab>
+  
+  <Tab title="Dashboard">
+    #### Get Dashboard Data
+    
+    Fetch dashboard statistics:
+    
+    ```typescript
+    const data = await api.getDashboard(token)
+    // Returns:
+    // {
+    //   total_employees: number
+    //   new_hire_count: number
+    //   upcoming_event: number
+    //   open_positions: number
+    // }
+    ```
+  </Tab>
+  
+  <Tab title="Employees">
+    #### List Employees
+    
+    Fetch paginated employee list:
+    
+    ```typescript
+    const employees = await api.getEmployees(token, 1, {
+      department: 'Engineering',
+      status: 'active'
+    })
+    // Returns:
+    // {
+    //   data: Employee[]
+    //   current_page: number
+    //   per_page: number
+    //   total: number
+    //   next_page_url: string | null
+    //   prev_page_url: string | null
+    // }
+    ```
+    
+    #### Get Employee Details
+    
+    Fetch single employee:
+    
+    ```typescript
+    const employee = await api.getEmployee(token, 123)
+    // Returns full EmployeeDetail object
+    ```
+    
+    #### Search Employees
+    
+    Search with filters:
+    
+    ```typescript
+    const results = await api.searchEmployees(
+      token,
+      { name: 'John', department: 'Sales' },
+      1
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Type Definitions
+
+The API client includes comprehensive TypeScript types for type safety.
+
+### Authentication Types
+
+```typescript lib/api.ts
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface LoginResponse {
+  user: {
+    id: number
+    name: string
+    email: string
+    [key: string]: any
+  }
+  token: string
+}
+```
+
+### Employee Types
+
+```typescript lib/api.ts
+export interface Employee {
+  id: number
+  name: string
+  email: string
+  job_title: string
+  department: string
+  location: string
+  employment_type: string
+  status: string
+  start_date: string
+  avatar?: string
+}
+
+export interface EmployeeDetail extends Employee {
+  phone: string
+  date_of_birth: string
+  address: string
+  salary: number
+  manager: string
+  manager_id: number
+  next_of_kin_name: string
+  next_of_kin_relationship: string
+  next_of_kin_phone: string
+  tenure_years: number
+  tenure_months: number
+  spouse: string | null
+}
+```
+
+## Authentication
+
+### Session Management
+
+Authentication is handled via `lib/auth.ts:1-41` using localStorage:
+
+```typescript auth.ts
+export interface AuthSession {
+  token: string
+  user: {
+    id: number
+    name: string
+    email: string
+  }
+}
+
+const SESSION_KEY = 'hcmatrix_session'
+
+export const auth = {
+  saveSession(session: AuthSession): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    }
+  },
+
+  getSession(): AuthSession | null {
+    if (typeof window !== 'undefined') {
+      const session = localStorage.getItem(SESSION_KEY)
+      return session ? JSON.parse(session) : null
+    }
+    return null
+  },
+
+  clearSession(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(SESSION_KEY)
+    }
+  },
+
+  isAuthenticated(): boolean {
+    return this.getSession() !== null
+  },
+
+  getToken(): string | null {
+    return this.getSession()?.token || null
+  },
+}
+```
+
+### Authentication Flow
+
+<Steps>
+  <Step title="User Login">
+    Call `api.login()` with credentials:
+    
+    ```typescript
+    const response = await api.login(email, password)
+    ```
+  </Step>
+  
+  <Step title="Save Session">
+    Store the session in localStorage:
+    
+    ```typescript
+    auth.saveSession({
+      token: response.token,
+      user: response.user
+    })
+    ```
+  </Step>
+  
+  <Step title="Use Token">
+    Include token in subsequent API calls:
+    
+    ```typescript
+    const token = auth.getToken()
+    const data = await api.getDashboard(token)
+    ```
+  </Step>
+  
+  <Step title="Logout">
+    Clear session on logout:
+    
+    ```typescript
+    await api.logout(token)
+    auth.clearSession()
+    ```
+  </Step>
+</Steps>
+
+### Protected Routes
+
+Protect pages by checking authentication status:
+
+```typescript page.tsx
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import { auth } from '@/lib/auth'
+
+export default function ProtectedPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!auth.getToken()) {
+      router.push('/auth/login')
+    }
+  }, [router])
+
+  // Page content...
+}
+```
+
+## Error Handling
+
+The API client includes comprehensive error handling:
+
+### Connection Errors
+
+When the backend is unreachable:
+
+```json
+{
+  "message": "Failed to connect to API server",
+  "status": 502
+}
+```
+
+### API Errors
+
+When the API returns an error:
+
+```typescript
+try {
+  await api.login(email, password)
+} catch (error) {
+  // Error message from API or generic error
+  console.error(error.message)
+}
+```
+
+### Non-JSON Responses
+
+If the API returns non-JSON content:
+
+```typescript
+throw new Error(`API returned non-JSON response: ${response.status}`)
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Always Use Types" icon="code">
+    Leverage TypeScript interfaces for type safety and autocomplete
+  </Card>
+  
+  <Card title="Handle Errors" icon="triangle-exclamation">
+    Wrap API calls in try/catch blocks and provide user feedback
+  </Card>
+  
+  <Card title="Check Authentication" icon="user-shield">
+    Verify token exists before making authenticated requests
+  </Card>
+  
+  <Card title="Normalize Data" icon="table">
+    Use mapper functions to normalize API responses
+  </Card>
+</CardGroup>
+
+## Testing API Integration
+
+### Local Testing
+
+Test the proxy with curl:
+
+```bash
+curl http://localhost:3000/api/proxy/api/auth/login \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password"}'
+```
+
+### Using Different Backends
+
+Switch between environments:
+
+<CodeGroup>
+  ```bash Development
+  API_BASE_URL=https://apitest.hcmatrix.co
+  ```
+  
+  ```bash Staging
+  API_BASE_URL=https://api-staging.hcmatrix.co
+  ```
+  
+  ```bash Production
+  API_BASE_URL=https://api.hcmatrix.co
+  ```
+</CodeGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="502 Bad Gateway">
+    **Cause**: Backend server is unreachable
+    
+    **Solutions**:
+    - Verify `API_BASE_URL` is correct
+    - Check backend server is running
+    - Test backend URL directly in browser
+  </Accordion>
+  
+  <Accordion title="401 Unauthorized">
+    **Cause**: Invalid or expired token
+    
+    **Solutions**:
+    - Check token is being sent in Authorization header
+    - Verify token hasn't expired
+    - Re-authenticate user
+  </Accordion>
+  
+  <Accordion title="CORS Errors">
+    **Cause**: Bypassing the proxy
+    
+    **Solutions**:
+    - Always use `/api/proxy/` prefix
+    - Never call backend URL directly from frontend
+    - Use the `api` client from `lib/api.ts`
+  </Accordion>
+  
+  <Accordion title="Type Errors">
+    **Cause**: API response doesn't match TypeScript interface
+    
+    **Solutions**:
+    - Check API documentation
+    - Update type definitions
+    - Use mapper functions to normalize data
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Setup" icon="gear" href="/configuration/environment-setup">
+    Complete environment configuration guide
+  </Card>
+  <Card title="Settings" icon="sliders" href="/configuration/settings">
+    Configure platform settings and preferences
+  </Card>
+</CardGroup>

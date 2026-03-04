@@ -1,0 +1,118 @@
+---
+title: 'API Overview'
+description: 'Introduction to the HCMatrix API and general usage guidelines'
+---
+
+## Introduction
+
+The HCMatrix API provides programmatic access to employee data, dashboard metrics, and authentication services for your HR management platform.
+
+## Base URL
+
+All API calls in HCMatrix go through a Next.js proxy to avoid CORS issues:
+
+```typescript
+const PROXY_BASE = '/api/proxy'
+```
+
+API endpoints are prefixed with either:
+- `/api/auth/` - Authentication endpoints
+- `/api/v1/` - Core API endpoints
+
+## Proxy Setup
+
+The API client uses a proxy-based architecture where all requests are routed through `/api/proxy` endpoint. This design:
+
+- Prevents CORS issues by keeping requests same-origin
+- Centralizes authentication token handling
+- Provides a consistent error handling layer
+
+## Making API Calls
+
+The core API client function handles all HTTP requests:
+
+```typescript
+async function apiCall<T>(
+  endpoint: string,
+  method: 'GET' | 'POST' = 'GET',
+  body?: Record<string, unknown>,
+  token?: string
+): Promise<T>
+```
+
+### Headers
+
+All requests include:
+- `Accept: application/json` - Required for all requests
+- `Authorization: Bearer {token}` - Added when token is provided
+- `Content-Type: application/json` - Added only for requests with a body
+
+### Response Handling
+
+The API client:
+1. Validates that responses are JSON format
+2. Throws errors for non-JSON responses
+3. Extracts error messages from response body
+4. Returns typed response data
+
+### Error Format
+
+API errors are thrown with messages extracted from:
+```typescript
+responseData?.message || responseData?.error || `API error: ${response.status}`
+```
+
+## Authentication
+
+Most API endpoints require a bearer token obtained through the [login endpoint](/api/authentication#login). Include the token in the Authorization header:
+
+```typescript
+headers['Authorization'] = `Bearer ${token}`
+```
+
+See the [Authentication](/api/authentication) page for detailed authentication methods.
+
+## Available Endpoints
+
+### Authentication
+- [POST /api/auth/login](/api/authentication#login) - User login
+- [POST /api/v1/logout](/api/authentication#logout) - User logout
+
+### Dashboard
+- [GET /api/v1/dashboard](/api/dashboard) - Get dashboard metrics
+
+### Employees
+- [GET /api/v1/employee](/api/employees#get-employees) - List employees with pagination
+- [GET /api/v1/employee?{query}](/api/employees#search-employees) - Search employees
+- [GET /api/v1/employee/{id}](/api/employee-details) - Get employee details
+
+## Data Models
+
+- [Employee](/api/models/employee#employee) - Basic employee information
+- [EmployeeDetail](/api/models/employee#employee-detail) - Extended employee information
+- [DashboardData](/api/models/dashboard-data) - Dashboard metrics
+
+## Usage Example
+
+```typescript
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+
+// Login
+const loginResponse = await api.login('user@example.com', 'password')
+auth.saveSession({
+  token: loginResponse.token,
+  user: loginResponse.user
+})
+
+// Get dashboard data
+const token = auth.getToken()
+if (token) {
+  const dashboard = await api.getDashboard(token)
+  console.log(`Total employees: ${dashboard.total_employees}`)
+  
+  // Get employees
+  const employees = await api.getEmployees(token, 1)
+  console.log(`Found ${employees.total} employees`)
+}
+```

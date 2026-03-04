@@ -1,0 +1,192 @@
+---
+title: 'Dashboard'
+description: 'Get dashboard metrics and statistics'
+---
+
+## Get Dashboard
+
+Retrieve key metrics and statistics for the HR dashboard.
+
+### Method
+
+```typescript
+api.getDashboard(token: string): Promise<DashboardData>
+```
+
+### Endpoint
+
+```
+GET /api/v1/dashboard
+```
+
+### Parameters
+
+<ParamField path="token" type="string" required>
+  Authentication token obtained from login
+</ParamField>
+
+### Response
+
+<ResponseField name="total_employees" type="number" required>
+  Total number of employees in the organization
+</ResponseField>
+
+<ResponseField name="new_hire_count" type="number" required>
+  Number of new hires
+</ResponseField>
+
+<ResponseField name="upcoming_event" type="number" required>
+  Number of upcoming events
+</ResponseField>
+
+<ResponseField name="open_positions" type="number" required>
+  Number of open job positions
+</ResponseField>
+
+### Response Interface
+
+```typescript
+interface DashboardData {
+  total_employees: number
+  new_hire_count: number
+  upcoming_event: number
+  open_positions: number
+}
+```
+
+### Response Format
+
+The API may return data wrapped in a success object:
+
+```json
+{
+  "success": true,
+  "data": {
+    "total_employees": 150,
+    "new_hire_count": 5,
+    "upcoming_event": 3,
+    "open_positions": 8
+  }
+}
+```
+
+The `getDashboard` method automatically extracts the data object and normalizes the response.
+
+### Data Normalization
+
+The method ensures all fields have default values:
+
+```typescript
+return {
+  total_employees: data.total_employees ?? 0,
+  new_hire_count: data.new_hire_count ?? 0,
+  upcoming_event: data.upcoming_event ?? 0,
+  open_positions: data.open_positions ?? 0,
+}
+```
+
+### Example Request
+
+```typescript
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+
+const token = auth.getToken()
+
+if (token) {
+  try {
+    const dashboard = await api.getDashboard(token)
+    
+    console.log('Dashboard Metrics:')
+    console.log(`Total Employees: ${dashboard.total_employees}`)
+    console.log(`New Hires: ${dashboard.new_hire_count}`)
+    console.log(`Upcoming Events: ${dashboard.upcoming_event}`)
+    console.log(`Open Positions: ${dashboard.open_positions}`)
+  } catch (error) {
+    console.error('Failed to fetch dashboard:', error.message)
+  }
+}
+```
+
+### Example Response
+
+```json
+{
+  "total_employees": 150,
+  "new_hire_count": 5,
+  "upcoming_event": 3,
+  "open_positions": 8
+}
+```
+
+### Usage in React Component
+
+```typescript
+import { useState, useEffect } from 'react'
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+import type { DashboardData } from '@/lib/api'
+
+export default function DashboardStats() {
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      const token = auth.getToken()
+      if (token) {
+        try {
+          const dashboard = await api.getDashboard(token)
+          setData(dashboard)
+        } catch (error) {
+          console.error('Error:', error)
+        } finally {
+          setLoading(false)
+        }
+      }
+    }
+    
+    fetchDashboard()
+  }, [])
+  
+  if (loading) return <div>Loading...</div>
+  if (!data) return <div>No data available</div>
+  
+  return (
+    <div>
+      <StatCard title="Total Employees" value={data.total_employees} />
+      <StatCard title="New Hires" value={data.new_hire_count} />
+      <StatCard title="Upcoming Events" value={data.upcoming_event} />
+      <StatCard title="Open Positions" value={data.open_positions} />
+    </div>
+  )
+}
+```
+
+### Error Handling
+
+Common errors:
+
+- **401 Unauthorized**: Invalid or expired token
+- **403 Forbidden**: User doesn't have permission to access dashboard
+- **500 Internal Server Error**: Server-side error
+
+```typescript
+try {
+  const dashboard = await api.getDashboard(token)
+} catch (error) {
+  if (error.message.includes('401')) {
+    // Token expired, redirect to login
+    auth.clearSession()
+    window.location.href = '/login'
+  } else {
+    // Handle other errors
+    console.error('Dashboard error:', error.message)
+  }
+}
+```
+
+## Related
+
+- [DashboardData Model](/api/models/dashboard-data) - Complete interface documentation
+- [Authentication](/api/authentication) - How to obtain tokens

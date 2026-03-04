@@ -1,0 +1,409 @@
+---
+title: Recruiting Workflow
+description: End-to-end guide for managing recruitment and hiring processes in HCMatrix
+---
+
+## Overview
+
+The Recruitment module in HCMatrix helps you manage the entire hiring lifecycle from job posting to candidate onboarding. This module streamlines applicant tracking, interview scheduling, and new hire processing.
+
+## Accessing Recruitment
+
+<Steps>
+  <Step title="Navigate to Recruitment Module">
+    Access the Recruitment section from the main navigation sidebar. Authentication is required:
+
+    ```typescript
+    // From: ~/workspace/source/app/recruitment/page.tsx:12-16
+    useEffect(() => {
+      if (!auth.getToken()) {
+        router.push('/auth/login')
+      }
+    }, [router])
+    ```
+  </Step>
+
+  <Step title="Verify Access Permissions">
+    Only authenticated users with valid tokens can access recruitment features. The system automatically redirects unauthorized users to login.
+  </Step>
+</Steps>
+
+## Current Implementation
+
+The recruitment module uses the HCMatrix standard layout:
+
+```tsx
+// From: ~/workspace/source/app/recruitment/page.tsx:18-31
+return (
+  <div className="min-h-screen bg-gray-50">
+    <Sidebar />
+    <div className="ml-64 flex flex-col min-h-screen">
+      <Header title="Recruitment" />
+      <main className="flex-1 p-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <p className="text-gray-600">Recruitment module coming soon...</p>
+        </div>
+      </main>
+    </div>
+  </div>
+)
+```
+
+<Note>
+  The Recruitment module is currently under development. Advanced applicant tracking, interview management, and hiring workflows are being implemented.
+</Note>
+
+## Planned Features
+
+The upcoming Recruitment module will include comprehensive hiring tools:
+
+### Job Posting Management
+- Create and publish job requisitions
+- Multi-channel job posting (careers page, job boards, social media)
+- Job description templates
+- Internal vs. external posting options
+- Requisition approval workflows
+
+### Applicant Tracking System (ATS)
+- Centralized candidate database
+- Resume parsing and storage
+- Application status tracking
+- Candidate communication history
+- Automated candidate screening
+
+### Interview Management
+- Schedule interviews with candidates
+- Calendar integration for interviewers
+- Interview feedback forms
+- Scorecards and evaluation rubrics
+- Panel interview coordination
+
+### Hiring Workflow
+- Offer letter generation
+- Background check management
+- Reference check tracking
+- Offer acceptance and negotiation
+- Pre-employment document collection
+
+### Candidate Experience
+- Career portal for job seekers
+- Application progress tracking
+- Mobile-friendly application process
+- Automated status updates
+- Candidate self-service portal
+
+## Integration with Dashboard
+
+The recruitment module integrates with the HCMatrix dashboard:
+
+```typescript
+// From: ~/workspace/source/lib/api.ts:19-24
+export interface DashboardData {
+  total_employees: number
+  new_hire_count: number
+  upcoming_event: number
+  open_positions: number  // Shows current job openings
+}
+```
+
+The dashboard displays the number of open positions, providing quick visibility into active recruitment efforts.
+
+## Recruiting to Employee Transition
+
+When candidates are hired, they transition into the employee management system:
+
+### Employee Onboarding Status
+
+New hires appear with "Onboarding" status:
+
+```typescript
+// From: ~/workspace/source/app/employees/page.tsx:101-115
+const statusMap: Record<string, { bg: string; text: string }> = {
+  active: { bg: 'bg-green-100', text: 'text-green-700' },
+  onboarding: { bg: 'bg-yellow-100', text: 'text-yellow-700' },  // New hires
+  'on leave': { bg: 'bg-orange-100', text: 'text-orange-700' },
+  inactive: { bg: 'bg-gray-100', text: 'text-gray-700' },
+  terminated: { bg: 'bg-red-100', text: 'text-red-700' },
+}
+```
+
+New employees are flagged with the yellow "Onboarding" badge until they complete orientation.
+
+## Planned API Structure
+
+The recruitment API will follow HCMatrix patterns:
+
+```typescript
+// Example future API endpoints
+export const api = {
+  // Job Requisitions
+  async createJobPosting(
+    token: string,
+    jobData: JobPosting
+  ): Promise<JobPosting> {
+    return apiCall<JobPosting>('/api/v1/jobs', 'POST', jobData, token)
+  },
+
+  async getJobPostings(
+    token: string,
+    status?: 'open' | 'closed' | 'draft'
+  ): Promise<JobPosting[]> {
+    const params = status ? { status } : {}
+    const queryString = new URLSearchParams(params).toString()
+    return apiCall<JobPosting[]>(
+      `/api/v1/jobs?${queryString}`,
+      'GET',
+      undefined,
+      token
+    )
+  },
+
+  // Candidate Management
+  async getCandidates(
+    token: string,
+    jobId?: number,
+    page: number = 1
+  ): Promise<CandidatesResponse> {
+    const params: any = { page }
+    if (jobId) params.job_id = jobId
+    const queryString = new URLSearchParams(params).toString()
+    return apiCall<CandidatesResponse>(
+      `/api/v1/candidates?${queryString}`,
+      'GET',
+      undefined,
+      token
+    )
+  },
+
+  async getCandidate(
+    token: string,
+    candidateId: number
+  ): Promise<CandidateDetail> {
+    return apiCall<CandidateDetail>(
+      `/api/v1/candidates/${candidateId}`,
+      'GET',
+      undefined,
+      token
+    )
+  },
+
+  // Interview Scheduling
+  async scheduleInterview(
+    token: string,
+    candidateId: number,
+    interviewData: InterviewSchedule
+  ): Promise<Interview> {
+    return apiCall<Interview>(
+      `/api/v1/interviews`,
+      'POST',
+      { candidate_id: candidateId, ...interviewData },
+      token
+    )
+  },
+
+  // Offer Management
+  async createOffer(
+    token: string,
+    candidateId: number,
+    offerData: JobOffer
+  ): Promise<JobOffer> {
+    return apiCall<JobOffer>(
+      `/api/v1/offers`,
+      'POST',
+      { candidate_id: candidateId, ...offerData },
+      token
+    )
+  },
+
+  // Convert candidate to employee
+  async hireCandidate(
+    token: string,
+    candidateId: number,
+    startDate: string
+  ): Promise<Employee> {
+    return apiCall<Employee>(
+      `/api/v1/candidates/${candidateId}/hire`,
+      'POST',
+      { start_date: startDate },
+      token
+    )
+  }
+}
+```
+
+## Data Structures
+
+Planned recruitment data interfaces:
+
+```typescript
+export interface JobPosting {
+  id: number
+  title: string
+  description: string
+  department: string
+  location: string
+  employment_type: 'full-time' | 'part-time' | 'contract' | 'temporary'
+  salary_range_min?: number
+  salary_range_max?: number
+  status: 'draft' | 'open' | 'closed'
+  posted_date?: string
+  closing_date?: string
+  hiring_manager_id: number
+  required_skills: string[]
+  preferred_skills: string[]
+}
+
+export interface Candidate {
+  id: number
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  resume_url?: string
+  applied_date: string
+  status: 'new' | 'screening' | 'interviewing' | 'offer' | 'hired' | 'rejected'
+  job_id: number
+  job_title: string
+  source: 'direct' | 'referral' | 'job_board' | 'social_media' | 'other'
+}
+
+export interface CandidateDetail extends Candidate {
+  address: string
+  linkedin_url?: string
+  portfolio_url?: string
+  cover_letter?: string
+  application_notes?: string
+  interviews: Interview[]
+  offers: JobOffer[]
+  screening_results?: ScreeningResult[]
+}
+
+export interface CandidatesResponse {
+  data: Candidate[]
+  current_page: number
+  per_page: number
+  total: number
+  next_page_url: string | null
+  prev_page_url: string | null
+}
+
+export interface Interview {
+  id: number
+  candidate_id: number
+  job_id: number
+  interview_type: 'phone' | 'video' | 'onsite' | 'panel'
+  scheduled_date: string
+  duration_minutes: number
+  interviewer_ids: number[]
+  location?: string
+  meeting_link?: string
+  status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+  feedback?: InterviewFeedback[]
+}
+
+export interface InterviewFeedback {
+  interviewer_id: number
+  interviewer_name: string
+  rating: 1 | 2 | 3 | 4 | 5
+  comments: string
+  recommendation: 'strong_yes' | 'yes' | 'neutral' | 'no' | 'strong_no'
+  submitted_at: string
+}
+
+export interface JobOffer {
+  id: number
+  candidate_id: number
+  job_id: number
+  salary: number
+  start_date: string
+  employment_type: string
+  benefits: string[]
+  status: 'draft' | 'sent' | 'accepted' | 'declined' | 'withdrawn'
+  sent_date?: string
+  response_deadline?: string
+  accepted_date?: string
+}
+
+export interface ScreeningResult {
+  type: 'skills_test' | 'background_check' | 'reference_check'
+  status: 'pending' | 'passed' | 'failed'
+  score?: number
+  notes?: string
+  completed_date?: string
+}
+```
+
+## Recruitment Workflow
+
+The standard hiring process follows these stages:
+
+<Steps>
+  <Step title="Create Job Requisition">
+    HR or hiring managers create a job posting with requirements, description, and salary range.
+  </Step>
+
+  <Step title="Publish Job Opening">
+    Post the job to your careers page and external job boards. Track application sources.
+  </Step>
+
+  <Step title="Receive Applications">
+    Candidates apply through various channels. Resumes are automatically parsed and stored.
+  </Step>
+
+  <Step title="Screen Candidates">
+    Review applications and filter candidates based on qualifications. Move promising candidates to interview stage.
+  </Step>
+
+  <Step title="Conduct Interviews">
+    Schedule and conduct phone, video, or onsite interviews. Collect feedback from all interviewers.
+  </Step>
+
+  <Step title="Extend Job Offer">
+    Create and send offer letters to selected candidates. Track offer acceptance and negotiations.
+  </Step>
+
+  <Step title="Onboard New Hire">
+    Upon offer acceptance, convert the candidate to an employee record with "Onboarding" status.
+  </Step>
+
+  <Step title="Complete Onboarding">
+    Process new hire paperwork, setup accounts, and schedule orientation. Update status to "Active".
+  </Step>
+</Steps>
+
+## Best Practices
+
+### For Hiring Managers
+- Define clear job requirements before posting
+- Review applications within 48 hours
+- Provide timely feedback to candidates
+- Complete interview scorecards immediately after interviews
+- Coordinate with HR on offer details
+
+### For Recruiters
+- Source candidates from diverse channels
+- Maintain regular communication with applicants
+- Keep candidate data up-to-date
+- Monitor time-to-hire metrics
+- Build talent pipelines for future openings
+
+### For HR Administrators
+- Ensure compliance with hiring regulations
+- Standardize interview questions
+- Document hiring decisions
+- Track diversity hiring metrics
+- Streamline onboarding for new hires
+
+<Tip>
+  Use interview scorecards and structured questions to reduce bias and improve hiring consistency across your organization.
+</Tip>
+
+<Warning>
+  All recruitment data is confidential. Ensure only authorized personnel have access to candidate information and comply with data privacy regulations.
+</Warning>
+
+## Next Steps
+
+- [Managing Employees](/guides/managing-employees) - View onboarding employees
+- [Generating Reports](/guides/generating-reports) - Analyze recruitment metrics
+- [Authentication Guide](/guides/authentication) - Secure access to recruitment data

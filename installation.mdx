@@ -1,0 +1,537 @@
+---
+title: Installation
+description: Complete setup and configuration guide for deploying HCMatrix
+---
+
+# Installation Guide
+
+This comprehensive guide covers everything you need to install, configure, and deploy HCMatrix in both development and production environments.
+
+## System Requirements
+
+### Software Prerequisites
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    Version 18.x or higher required
+  </Card>
+  
+  <Card title="Package Manager" icon="box">
+    npm 9.x+ or yarn 1.22+
+  </Card>
+  
+  <Card title="Git" icon="git-alt">
+    For version control (optional but recommended)
+  </Card>
+  
+  <Card title="Code Editor" icon="code">
+    VS Code, WebStorm, or similar
+  </Card>
+</CardGroup>
+
+### Hardware Requirements
+
+- **RAM**: Minimum 4GB (8GB recommended for development)
+- **Storage**: At least 500MB free space
+- **CPU**: Modern multi-core processor
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone or download the source code">
+    ```bash
+    git clone <repository-url> hcmatrix
+    cd hcmatrix
+    ```
+    
+    Alternatively, download and extract the source code archive.
+  </Step>
+  
+  <Step title="Install dependencies">
+    The project uses modern React and Next.js packages. From `package.json:11`:
+    
+    ```bash
+    npm install
+    ```
+    
+    This installs all required dependencies:
+    
+    **Core Framework:**
+    - `next@16.1.6` - Next.js framework
+    - `react@19.2.4` - React library
+    - `react-dom@19.2.4` - React DOM renderer
+    
+    **UI Components:**
+    - `@radix-ui/*` - Accessible component primitives
+    - `lucide-react@0.564.0` - Icon library
+    - `tailwind-merge@3.3.1` - Tailwind utility merger
+    - `class-variance-authority@0.7.1` - Component variant styling
+    
+    **Form & Validation:**
+    - `react-hook-form@7.54.1` - Form state management
+    - `@hookform/resolvers@3.9.1` - Form validation resolvers
+    - `zod@3.24.1` - Schema validation
+    
+    **Data Visualization:**
+    - `recharts@2.15.0` - Chart library
+    
+    **Utilities:**
+    - `date-fns@4.1.0` - Date manipulation
+    - `clsx@2.1.1` - Conditional classnames
+    - `sonner@1.7.1` - Toast notifications
+    
+    **Development Dependencies:**
+    - `typescript@5.7.3` - TypeScript compiler
+    - `tailwindcss@4.2.0` - Utility-first CSS framework
+    - `@types/node`, `@types/react`, `@types/react-dom` - Type definitions
+  </Step>
+  
+  <Step title="Configure environment variables">
+    Create environment configuration files for different environments.
+    
+    ### Development Environment
+    
+    Create `.env.local`:
+    
+    ```bash
+    # Backend API Configuration
+    NEXT_PUBLIC_API_URL=http://localhost:8000
+    
+    # Optional: Analytics
+    NEXT_PUBLIC_VERCEL_ANALYTICS_ID=your-analytics-id
+    ```
+    
+    ### Production Environment
+    
+    Create `.env.production`:
+    
+    ```bash
+    # Backend API Configuration
+    NEXT_PUBLIC_API_URL=https://api.yourcompany.com
+    
+    # Analytics (if using Vercel)
+    NEXT_PUBLIC_VERCEL_ANALYTICS_ID=your-production-analytics-id
+    ```
+    
+    <Warning>
+      Never commit `.env.local` or `.env.production` to version control. Add them to `.gitignore`.
+    </Warning>
+  </Step>
+  
+  <Step title="Verify the setup">
+    Run the development server to ensure everything is configured correctly:
+    
+    ```bash
+    npm run dev
+    ```
+    
+    The application should start on `http://localhost:3000`. You should see the loading screen followed by a redirect to `/auth/login`.
+  </Step>
+</Steps>
+
+## Understanding the Configuration
+
+### Package Scripts
+
+From `package.json:5`, the following scripts are available:
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  }
+}
+```
+
+**Script Descriptions:**
+
+- `npm run dev` - Start development server with hot reload on `http://localhost:3000`
+- `npm run build` - Create optimized production build in `.next/` directory
+- `npm start` - Start production server (requires running `npm run build` first)
+- `npm run lint` - Run ESLint to check code quality
+
+### Application Metadata
+
+From `app/layout.tsx:9`, the application is configured with:
+
+```typescript
+export const metadata: Metadata = {
+  title: 'HCMatrix - HR Management',
+  description: 'Manage your organization\'s workforce with powerful HR tools',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
+}
+```
+
+Place your company logo at `public/logo.png` to customize the branding.
+
+## API Proxy Configuration
+
+HCMatrix uses Next.js API routes to proxy backend requests and avoid CORS issues. From `lib/api.ts:2`:
+
+```typescript
+// All API calls go through our Next.js proxy to avoid CORS issues
+const PROXY_BASE = '/api/proxy'
+```
+
+### Setting Up the Backend Proxy
+
+You'll need to create a proxy route in your Next.js application:
+
+**Create `app/api/proxy/[...path]/route.ts`:**
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  return proxyRequest(request, 'GET')
+}
+
+export async function POST(request: NextRequest) {
+  return proxyRequest(request, 'POST')
+}
+
+async function proxyRequest(request: NextRequest, method: string) {
+  const path = request.nextUrl.pathname.replace('/api/proxy', '')
+  const backend = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  const url = `${backend}${path}${request.nextUrl.search}`
+  
+  const headers: HeadersInit = {}
+  request.headers.forEach((value, key) => {
+    if (!key.toLowerCase().startsWith('host')) {
+      headers[key] = value
+    }
+  })
+  
+  const options: RequestInit = {
+    method,
+    headers,
+  }
+  
+  if (method === 'POST') {
+    options.body = await request.text()
+  }
+  
+  const response = await fetch(url, options)
+  const data = await response.text()
+  
+  return new NextResponse(data, {
+    status: response.status,
+    headers: {
+      'Content-Type': response.headers.get('Content-Type') || 'application/json',
+    },
+  })
+}
+```
+
+<Note>
+  The proxy automatically forwards authentication headers and request bodies to your backend API.
+</Note>
+
+## Authentication Setup
+
+HCMatrix uses localStorage-based session management. From `lib/auth.ts:1`:
+
+### Session Structure
+
+```typescript
+export interface AuthSession {
+  token: string
+  user: {
+    id: number
+    name: string
+    email: string
+  }
+}
+
+const SESSION_KEY = 'hcmatrix_session'
+```
+
+### Authentication Methods
+
+The `auth` utility provides the following methods from `lib/auth.ts:12`:
+
+```typescript
+export const auth = {
+  // Save user session to localStorage
+  saveSession(session: AuthSession): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    }
+  },
+
+  // Retrieve current session
+  getSession(): AuthSession | null {
+    if (typeof window !== 'undefined') {
+      const session = localStorage.getItem(SESSION_KEY)
+      return session ? JSON.parse(session) : null
+    }
+    return null
+  },
+
+  // Clear session (logout)
+  clearSession(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(SESSION_KEY)
+    }
+  },
+
+  // Check if user is authenticated
+  isAuthenticated(): boolean {
+    return this.getSession() !== null
+  },
+
+  // Get authentication token
+  getToken(): string | null {
+    return this.getSession()?.token || null
+  },
+}
+```
+
+### Route Protection
+
+From `app/page.tsx:7`, the home page automatically redirects based on authentication status:
+
+```typescript
+export default function Home() {
+  const router = useRouter()
+
+  useEffect(() => {
+    const token = auth.getToken()
+    if (token) {
+      router.push('/dashboard')
+    } else {
+      router.push('/auth/login')
+    }
+  }, [router])
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="mt-4 text-gray-600">Loading...</p>
+      </div>
+    </div>
+  )
+}
+```
+
+## Building for Production
+
+<Steps>
+  <Step title="Create production build">
+    ```bash
+    npm run build
+    ```
+    
+    This command:
+    - Compiles TypeScript to JavaScript
+    - Optimizes React components
+    - Generates static pages where possible
+    - Minifies CSS and JavaScript
+    - Creates optimized image assets
+    
+    Build output will be in the `.next/` directory.
+  </Step>
+  
+  <Step title="Test production build locally">
+    ```bash
+    npm start
+    ```
+    
+    This starts the production server on `http://localhost:3000`. Test thoroughly before deploying.
+  </Step>
+  
+  <Step title="Deploy to hosting platform">
+    HCMatrix can be deployed to various platforms:
+    
+    **Vercel (Recommended):**
+    ```bash
+    npm install -g vercel
+    vercel
+    ```
+    
+    **Docker:**
+    ```dockerfile
+    FROM node:18-alpine
+    WORKDIR /app
+    COPY package*.json ./
+    RUN npm install
+    COPY . .
+    RUN npm run build
+    EXPOSE 3000
+    CMD ["npm", "start"]
+    ```
+    
+    **Other Platforms:**
+    - AWS Amplify
+    - Netlify
+    - Google Cloud Run
+    - Azure Static Web Apps
+  </Step>
+</Steps>
+
+## Environment Variables Reference
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|----------|
+| `NEXT_PUBLIC_API_URL` | Yes | Backend API base URL | `https://api.yourcompany.com` |
+| `NEXT_PUBLIC_VERCEL_ANALYTICS_ID` | No | Vercel Analytics tracking ID | `abc123xyz` |
+
+<Warning>
+  All environment variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Never include sensitive secrets in these variables.
+</Warning>
+
+## Customization
+
+### Branding
+
+1. **Logo**: Replace `/public/logo.png` with your company logo
+2. **Login Background**: Replace `/public/loginbg.jpg` with your background image
+3. **Favicon**: Update the `icon` and `apple` properties in `app/layout.tsx:12`
+4. **Title**: Modify the `title` in `app/layout.tsx:10`
+
+### Styling
+
+The application uses Tailwind CSS. Customize the design system by creating `tailwind.config.ts`:
+
+```typescript
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // Add your brand colors
+        primary: '#3b82f6',
+        secondary: '#8b5cf6',
+      },
+    },
+  },
+  plugins: [],
+}
+
+export default config
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Build fails with TypeScript errors">
+    1. Ensure TypeScript version is 5.7.3: `npm list typescript`
+    2. Delete `node_modules` and reinstall: `rm -rf node_modules && npm install`
+    3. Check for type errors: `npx tsc --noEmit`
+    4. Clear Next.js cache: `rm -rf .next`
+  </Accordion>
+  
+  <Accordion title="API requests fail with CORS errors">
+    1. Verify the proxy route is correctly set up at `/api/proxy/[...path]/route.ts`
+    2. Check that `NEXT_PUBLIC_API_URL` is correctly configured
+    3. Ensure the backend API allows requests from your frontend domain
+    4. Check browser console for detailed CORS error messages
+  </Accordion>
+  
+  <Accordion title="Authentication doesn't persist after refresh">
+    1. Check browser localStorage is enabled and not blocked
+    2. Verify the session key `hcmatrix_session` exists in localStorage
+    3. Ensure the auth token hasn't expired
+    4. Check for JavaScript errors in the browser console
+  </Accordion>
+  
+  <Accordion title="Styles not loading correctly">
+    1. Verify Tailwind CSS is properly configured
+    2. Check that `globals.css` is imported in `app/layout.tsx`
+    3. Clear browser cache and hard reload
+    4. Rebuild the application: `npm run build`
+  </Accordion>
+  
+  <Accordion title="Development server is slow">
+    1. Ensure Node.js version is up to date
+    2. Increase Node.js memory: `NODE_OPTIONS=--max-old-space-size=4096 npm run dev`
+    3. Disable unnecessary browser extensions
+    4. Check for heavy background processes
+  </Accordion>
+</AccordionGroup>
+
+## Performance Optimization
+
+### Production Checklist
+
+- [ ] Enable compression on your hosting platform
+- [ ] Configure CDN for static assets
+- [ ] Enable HTTP/2 or HTTP/3
+- [ ] Set appropriate cache headers
+- [ ] Optimize images using Next.js Image component
+- [ ] Enable analytics to monitor performance
+- [ ] Set up error tracking (Sentry, LogRocket, etc.)
+- [ ] Configure database connection pooling
+- [ ] Enable gzip/brotli compression
+
+### Monitoring
+
+From `app/layout.tsx:3`, Vercel Analytics is already integrated:
+
+```typescript
+import { Analytics } from '@vercel/analytics/next'
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body className="font-sans antialiased">
+        {children}
+        <Analytics />
+      </body>
+    </html>
+  )
+}
+```
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="shield">
+    Never commit `.env` files. Use `.env.example` as a template.
+  </Card>
+  
+  <Card title="Authentication Tokens" icon="key">
+    Tokens are stored in localStorage. Consider implementing token refresh for long-lived sessions.
+  </Card>
+  
+  <Card title="API Requests" icon="lock">
+    All API calls include Bearer token authentication from `lib/api.ts:76`
+  </Card>
+  
+  <Card title="HTTPS Only" icon="certificate">
+    Always use HTTPS in production for encrypted communication.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore all available API endpoints and TypeScript interfaces
+  </Card>
+  
+  <Card title="Feature Guides" icon="palette" href="/features/dashboard">
+    Learn about all the features and UI components
+  </Card>
+  
+  <Card title="Configuration" icon="rocket" href="/configuration/environment-setup">
+    Environment setup and deployment instructions
+  </Card>
+  
+  <Card title="User Guides" icon="users" href="/guides/authentication">
+    Step-by-step guides for common workflows
+  </Card>
+</CardGroup>

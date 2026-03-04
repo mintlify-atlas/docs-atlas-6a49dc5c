@@ -1,0 +1,237 @@
+---
+title: Tracking Attendance
+description: Learn how to monitor and manage employee time and attendance in HCMatrix
+---
+
+## Overview
+
+The Time & Attendance module in HCMatrix helps you track employee work hours, manage time-off requests, and monitor attendance patterns. This module is currently under development with enhanced features coming soon.
+
+## Accessing Attendance
+
+<Steps>
+  <Step title="Navigate to Attendance Module">
+    Access the Time & Attendance page from the main navigation sidebar. The system automatically validates your authentication:
+
+    ```typescript
+    // From: ~/workspace/source/app/attendance/page.tsx:12-16
+    useEffect(() => {
+      if (!auth.getToken()) {
+        router.push('/auth/login')
+      }
+    }, [router])
+    ```
+  </Step>
+
+  <Step title="Authentication Check">
+    The module requires a valid authentication token. If you're not logged in, you'll be redirected to the login page automatically.
+  </Step>
+</Steps>
+
+## Current Implementation
+
+The attendance module is built with a modern, responsive layout:
+
+```tsx
+// From: ~/workspace/source/app/attendance/page.tsx:18-31
+return (
+  <div className="min-h-screen bg-gray-50">
+    <Sidebar />
+    <div className="ml-64 flex flex-col min-h-screen">
+      <Header title="Time & Attendance" />
+      <main className="flex-1 p-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <p className="text-gray-600">Time & Attendance module coming soon...</p>
+        </div>
+      </main>
+    </div>
+  </div>
+)
+```
+
+<Note>
+  The Time & Attendance module is currently under development. Enhanced features for tracking employee hours, managing shifts, and processing time-off requests are being implemented.
+</Note>
+
+## Planned Features
+
+The upcoming Time & Attendance module will include:
+
+### Clock In/Out Functionality
+- Real-time employee clock-in and clock-out
+- Geolocation tracking for remote workers
+- Mobile app support for on-the-go time tracking
+- Break time management
+
+### Shift Management
+- Create and assign shifts to employees
+- Shift templates for recurring schedules
+- Shift swap requests and approvals
+- Overtime tracking and alerts
+
+### Time-Off Management
+- Vacation request submission
+- Sick leave tracking
+- Leave balance calculations
+- Manager approval workflows
+
+### Attendance Reporting
+- Daily attendance summaries
+- Late arrival and early departure tracking
+- Absence pattern analysis
+- Time card exports for payroll
+
+## Integration with Other Modules
+
+The attendance module will integrate seamlessly with:
+
+### Employee Management
+- Link attendance records to employee profiles
+- View attendance history from employee details page
+- Track attendance by department or location
+
+### Payroll Processing
+- Automatic time card submission for payroll
+- Overtime calculations
+- PTO accrual tracking
+- Integration with compensation data
+
+### Reports & Analytics
+- Attendance trends and patterns
+- Productivity metrics
+- Compliance reporting
+- Custom attendance reports
+
+## Authentication & Security
+
+Attendance tracking requires proper authentication:
+
+```typescript
+// The module checks for valid session
+const token = auth.getToken()
+if (!token) {
+  router.push('/auth/login')
+  return
+}
+```
+
+<Warning>
+  Always ensure you're logged in with appropriate permissions before accessing attendance data. Unauthorized access attempts are logged and monitored.
+</Warning>
+
+## Best Practices
+
+When the attendance module launches, follow these best practices:
+
+### For Employees
+- Clock in/out at the start and end of each shift
+- Submit time-off requests in advance
+- Report discrepancies immediately to your manager
+- Keep the mobile app updated for best performance
+
+### For Managers
+- Review and approve timecards promptly
+- Monitor attendance patterns for team health
+- Address chronic lateness or absenteeism early
+- Export time data before payroll deadlines
+
+### For HR Administrators
+- Configure attendance policies accurately
+- Set up automated alerts for attendance issues
+- Regularly audit attendance data
+- Maintain backup records for compliance
+
+## API Integration
+
+When available, the attendance API will follow the same patterns as other HCMatrix modules:
+
+```typescript
+// Example future API structure
+export const api = {
+  // Clock in/out
+  async clockIn(token: string, employeeId: number): Promise<ClockRecord> {
+    return apiCall<ClockRecord>('/api/v1/attendance/clock-in', 'POST', 
+      { employee_id: employeeId }, token)
+  },
+
+  // Get attendance records
+  async getAttendance(
+    token: string,
+    employeeId: number,
+    startDate: string,
+    endDate: string
+  ): Promise<AttendanceRecord[]> {
+    const params = { employee_id: employeeId, start_date: startDate, end_date: endDate }
+    const queryString = new URLSearchParams(params).toString()
+    return apiCall<AttendanceRecord[]>(
+      `/api/v1/attendance?${queryString}`,
+      'GET',
+      undefined,
+      token
+    )
+  },
+
+  // Submit time-off request
+  async requestTimeOff(
+    token: string,
+    employeeId: number,
+    startDate: string,
+    endDate: string,
+    reason: string
+  ): Promise<TimeOffRequest> {
+    return apiCall<TimeOffRequest>('/api/v1/time-off/request', 'POST',
+      { employee_id: employeeId, start_date: startDate, end_date: endDate, reason },
+      token
+    )
+  }
+}
+```
+
+## Data Structures
+
+Planned data interfaces for attendance:
+
+```typescript
+export interface ClockRecord {
+  id: number
+  employee_id: number
+  clock_in: string
+  clock_out?: string
+  break_duration?: number
+  location?: string
+  ip_address?: string
+  device_type?: string
+}
+
+export interface AttendanceRecord {
+  id: number
+  employee_id: number
+  date: string
+  status: 'present' | 'absent' | 'late' | 'half_day'
+  hours_worked: number
+  overtime_hours?: number
+  notes?: string
+}
+
+export interface TimeOffRequest {
+  id: number
+  employee_id: number
+  start_date: string
+  end_date: string
+  type: 'vacation' | 'sick' | 'personal' | 'other'
+  status: 'pending' | 'approved' | 'rejected'
+  reason: string
+  approver_id?: number
+  approved_at?: string
+}
+```
+
+<Tip>
+  Stay tuned for updates on the Time & Attendance module. Check the HCMatrix release notes for launch announcements and feature updates.
+</Tip>
+
+## Next Steps
+
+- [Managing Employees](/guides/managing-employees) - View and manage your workforce
+- [Processing Payroll](/guides/processing-payroll) - Calculate and process payroll
+- [Generating Reports](/guides/generating-reports) - Create attendance reports

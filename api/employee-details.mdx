@@ -1,0 +1,349 @@
+---
+title: 'Employee Details'
+description: 'Fetch detailed information for a specific employee'
+---
+
+## Get Employee
+
+Retrieve detailed information for a specific employee by ID.
+
+### Method
+
+```typescript
+api.getEmployee(token: string, id: number): Promise<EmployeeDetail>
+```
+
+### Endpoint
+
+```
+GET /api/v1/employee/{id}
+```
+
+### Parameters
+
+<ParamField path="token" type="string" required>
+  Authentication token obtained from login
+</ParamField>
+
+<ParamField path="id" type="number" required>
+  Employee's unique identifier
+</ParamField>
+
+### Response
+
+Returns an `EmployeeDetail` object which extends the basic `Employee` interface with additional fields.
+
+<ResponseField name="id" type="number" required>
+  Employee's unique identifier
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Employee's full name
+</ResponseField>
+
+<ResponseField name="email" type="string" required>
+  Employee's email address
+</ResponseField>
+
+<ResponseField name="job_title" type="string" required>
+  Employee's job title
+</ResponseField>
+
+<ResponseField name="department" type="string" required>
+  Department name
+</ResponseField>
+
+<ResponseField name="location" type="string" required>
+  Office location
+</ResponseField>
+
+<ResponseField name="employment_type" type="string" required>
+  Employment type (e.g., Full-time, Part-time, Contract)
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Employment status (e.g., active, inactive)
+</ResponseField>
+
+<ResponseField name="start_date" type="string" required>
+  Start date in ISO format
+</ResponseField>
+
+<ResponseField name="avatar" type="string">
+  URL to employee's avatar image (optional)
+</ResponseField>
+
+<ResponseField name="phone" type="string" required>
+  Employee's phone number
+</ResponseField>
+
+<ResponseField name="date_of_birth" type="string" required>
+  Date of birth in ISO format
+</ResponseField>
+
+<ResponseField name="address" type="string" required>
+  Employee's home address
+</ResponseField>
+
+<ResponseField name="salary" type="number" required>
+  Current salary amount
+</ResponseField>
+
+<ResponseField name="manager" type="string" required>
+  Manager's name
+</ResponseField>
+
+<ResponseField name="manager_id" type="number" required>
+  Manager's employee ID
+</ResponseField>
+
+<ResponseField name="next_of_kin_name" type="string" required>
+  Next of kin full name
+</ResponseField>
+
+<ResponseField name="next_of_kin_relationship" type="string" required>
+  Relationship to next of kin (e.g., Spouse, Parent, Sibling)
+</ResponseField>
+
+<ResponseField name="next_of_kin_phone" type="string" required>
+  Next of kin phone number
+</ResponseField>
+
+<ResponseField name="tenure_years" type="number" required>
+  Years of employment
+</ResponseField>
+
+<ResponseField name="tenure_months" type="number" required>
+  Additional months of employment (beyond full years)
+</ResponseField>
+
+<ResponseField name="spouse" type="string | null" required>
+  Spouse's name, or null if not applicable
+</ResponseField>
+
+### Response Interface
+
+See [EmployeeDetail model](/api/models/employee#employee-detail) for complete interface documentation.
+
+### Example Request
+
+```typescript
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+
+const token = auth.getToken()
+
+if (token) {
+  try {
+    const employee = await api.getEmployee(token, 1)
+    
+    console.log('Employee Details:')
+    console.log(`Name: ${employee.name}`)
+    console.log(`Email: ${employee.email}`)
+    console.log(`Job Title: ${employee.job_title}`)
+    console.log(`Department: ${employee.department}`)
+    console.log(`Phone: ${employee.phone}`)
+    console.log(`Manager: ${employee.manager}`)
+    console.log(`Salary: $${employee.salary.toLocaleString()}`)
+    console.log(`Tenure: ${employee.tenure_years} years, ${employee.tenure_months} months`)
+  } catch (error) {
+    console.error('Failed to fetch employee:', error.message)
+  }
+}
+```
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "job_title": "Senior Software Engineer",
+  "department": "Engineering",
+  "location": "New York",
+  "employment_type": "Full-time",
+  "status": "active",
+  "start_date": "2020-03-15",
+  "avatar": "https://example.com/avatars/john-doe.jpg",
+  "phone": "+1-555-123-4567",
+  "date_of_birth": "1990-05-20",
+  "address": "123 Main St, New York, NY 10001",
+  "salary": 125000,
+  "manager": "Jane Smith",
+  "manager_id": 5,
+  "next_of_kin_name": "Mary Doe",
+  "next_of_kin_relationship": "Spouse",
+  "next_of_kin_phone": "+1-555-987-6543",
+  "tenure_years": 5,
+  "tenure_months": 11,
+  "spouse": "Mary Doe"
+}
+```
+
+### Response Format
+
+The API may return data wrapped in a success object:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "full_name": "John Doe",
+    ...
+  }
+}
+```
+
+The `getEmployee` method automatically extracts the data object and maps it to the `EmployeeDetail` interface.
+
+## Data Mapping
+
+The API automatically maps raw API responses to standardized EmployeeDetail objects:
+
+```typescript
+function mapEmployeeDetail(raw: any): EmployeeDetail {
+  return {
+    ...mapEmployee(raw),
+    phone: raw.phone || raw.phone_number || '',
+    date_of_birth: raw.dob || raw.date_of_birth || '',
+    address: raw.address || '',
+    salary: raw.current_salary ?? raw.salary ?? 0,
+    manager: raw.manager || '',
+    manager_id: raw.manager_id || 0,
+    next_of_kin_name: raw.next_of_kin || raw.next_of_kin_name || '',
+    next_of_kin_relationship: raw.next_of_kin_relationship || raw.relationship || '',
+    next_of_kin_phone: raw.phone_no_nok || raw.next_of_kin_phone || '',
+    tenure_years: raw.tenure_years ?? 0,
+    tenure_months: raw.tenure_months ?? 0,
+    spouse: raw.spouse || null,
+  }
+}
+```
+
+This handles variations in API field names:
+- `phone` or `phone_number`
+- `dob` or `date_of_birth`
+- `current_salary` or `salary`
+- `next_of_kin` or `next_of_kin_name`
+- `phone_no_nok` or `next_of_kin_phone`
+
+## React Component Example
+
+```typescript
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+import type { EmployeeDetail } from '@/lib/api'
+
+export default function EmployeeProfile() {
+  const params = useParams()
+  const employeeId = Number(params.id)
+  
+  const [employee, setEmployee] = useState<EmployeeDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const fetchEmployee = async () => {
+      const token = auth.getToken()
+      if (!token) {
+        setError('Not authenticated')
+        setLoading(false)
+        return
+      }
+      
+      try {
+        const data = await api.getEmployee(token, employeeId)
+        setEmployee(data)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchEmployee()
+  }, [employeeId])
+  
+  if (loading) return <div>Loading employee...</div>
+  if (error) return <div>Error: {error}</div>
+  if (!employee) return <div>Employee not found</div>
+  
+  return (
+    <div>
+      <div>
+        {employee.avatar && (
+          <img src={employee.avatar} alt={employee.name} />
+        )}
+        <h1>{employee.name}</h1>
+        <p>{employee.job_title}</p>
+      </div>
+      
+      <section>
+        <h2>Contact Information</h2>
+        <p>Email: {employee.email}</p>
+        <p>Phone: {employee.phone}</p>
+        <p>Address: {employee.address}</p>
+      </section>
+      
+      <section>
+        <h2>Employment Details</h2>
+        <p>Department: {employee.department}</p>
+        <p>Location: {employee.location}</p>
+        <p>Type: {employee.employment_type}</p>
+        <p>Status: {employee.status}</p>
+        <p>Start Date: {new Date(employee.start_date).toLocaleDateString()}</p>
+        <p>Tenure: {employee.tenure_years} years, {employee.tenure_months} months</p>
+        <p>Manager: {employee.manager}</p>
+      </section>
+      
+      <section>
+        <h2>Personal Information</h2>
+        <p>Date of Birth: {new Date(employee.date_of_birth).toLocaleDateString()}</p>
+        {employee.spouse && <p>Spouse: {employee.spouse}</p>}
+      </section>
+      
+      <section>
+        <h2>Emergency Contact</h2>
+        <p>Name: {employee.next_of_kin_name}</p>
+        <p>Relationship: {employee.next_of_kin_relationship}</p>
+        <p>Phone: {employee.next_of_kin_phone}</p>
+      </section>
+    </div>
+  )
+}
+```
+
+## Error Handling
+
+Common errors:
+
+- **401 Unauthorized**: Invalid or expired token
+- **403 Forbidden**: User doesn't have permission to view employee details
+- **404 Not Found**: Employee ID doesn't exist
+- **500 Internal Server Error**: Server-side error
+
+```typescript
+try {
+  const employee = await api.getEmployee(token, employeeId)
+} catch (error) {
+  if (error.message.includes('404')) {
+    console.error('Employee not found')
+  } else if (error.message.includes('401')) {
+    // Token expired, redirect to login
+    auth.clearSession()
+    window.location.href = '/login'
+  } else {
+    console.error('Error fetching employee:', error.message)
+  }
+}
+```
+
+## Related
+
+- [EmployeeDetail Model](/api/models/employee#employee-detail) - Complete interface documentation
+- [Employees List](/api/employees) - Get list of employees
+- [Employee Model](/api/models/employee#employee) - Basic employee interface

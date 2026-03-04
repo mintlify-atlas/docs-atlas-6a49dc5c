@@ -1,0 +1,286 @@
+---
+title: 'Authentication'
+description: 'Authentication methods and session management for HCMatrix API'
+---
+
+## Overview
+
+HCMatrix uses token-based authentication with bearer tokens. After logging in, you receive a token that must be included in subsequent API requests.
+
+## Login
+
+Authenticate a user and receive an access token.
+
+### Method
+
+```typescript
+api.login(email: string, password: string): Promise<LoginResponse>
+```
+
+### Endpoint
+
+```
+POST /api/auth/login
+```
+
+### Parameters
+
+<ParamField path="email" type="string" required>
+  User's email address
+</ParamField>
+
+<ParamField path="password" type="string" required>
+  User's password
+</ParamField>
+
+### Request Body
+
+```typescript
+interface LoginRequest {
+  email: string
+  password: string
+}
+```
+
+### Response
+
+<ResponseField name="user" type="object" required>
+  User information object
+  
+  <ResponseField name="id" type="number">
+    User's unique identifier
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    User's full name
+  </ResponseField>
+  
+  <ResponseField name="email" type="string">
+    User's email address
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="token" type="string" required>
+  Bearer token for API authentication
+</ResponseField>
+
+### Response Interface
+
+```typescript
+interface LoginResponse {
+  user: {
+    id: number
+    name: string
+    email: string
+    [key: string]: any
+  }
+  token: string
+}
+```
+
+### Example
+
+```typescript
+import { api } from '@/lib/api'
+
+try {
+  const response = await api.login(
+    'user@example.com',
+    'password123'
+  )
+  
+  console.log('Logged in as:', response.user.name)
+  console.log('Token:', response.token)
+  
+  // Save session for future use
+  auth.saveSession({
+    token: response.token,
+    user: response.user
+  })
+} catch (error) {
+  console.error('Login failed:', error.message)
+}
+```
+
+## Logout
+
+Invalidate the current authentication token.
+
+### Method
+
+```typescript
+api.logout(token: string): Promise<void>
+```
+
+### Endpoint
+
+```
+POST /api/v1/logout
+```
+
+### Parameters
+
+<ParamField path="token" type="string" required>
+  The authentication token to invalidate
+</ParamField>
+
+### Example
+
+```typescript
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+
+const token = auth.getToken()
+if (token) {
+  await api.logout(token)
+  auth.clearSession()
+  console.log('Logged out successfully')
+}
+```
+
+## Session Management
+
+The `auth` utility provides methods for managing user sessions in the browser.
+
+### AuthSession Interface
+
+```typescript
+interface AuthSession {
+  token: string
+  user: {
+    id: number
+    name: string
+    email: string
+  }
+}
+```
+
+### Save Session
+
+Store authentication session in localStorage.
+
+```typescript
+auth.saveSession(session: AuthSession): void
+```
+
+**Example:**
+```typescript
+auth.saveSession({
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  user: {
+    id: 1,
+    name: 'John Doe',
+    email: 'john@example.com'
+  }
+})
+```
+
+### Get Session
+
+Retrieve the current session from localStorage.
+
+```typescript
+auth.getSession(): AuthSession | null
+```
+
+**Example:**
+```typescript
+const session = auth.getSession()
+if (session) {
+  console.log('Current user:', session.user.name)
+  console.log('Token:', session.token)
+} else {
+  console.log('No active session')
+}
+```
+
+### Clear Session
+
+Remove the session from localStorage.
+
+```typescript
+auth.clearSession(): void
+```
+
+**Example:**
+```typescript
+auth.clearSession()
+console.log('Session cleared')
+```
+
+### Check Authentication Status
+
+Check if a user is currently authenticated.
+
+```typescript
+auth.isAuthenticated(): boolean
+```
+
+**Example:**
+```typescript
+if (auth.isAuthenticated()) {
+  console.log('User is logged in')
+} else {
+  console.log('User is not logged in')
+}
+```
+
+### Get Token
+
+Retrieve only the authentication token.
+
+```typescript
+auth.getToken(): string | null
+```
+
+**Example:**
+```typescript
+const token = auth.getToken()
+if (token) {
+  // Use token for API calls
+  const dashboard = await api.getDashboard(token)
+}
+```
+
+## Session Storage
+
+Sessions are stored in browser localStorage with the key:
+
+```typescript
+const SESSION_KEY = 'hcmatrix_session'
+```
+
+## Complete Authentication Flow
+
+```typescript
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+
+// 1. Login
+const loginResponse = await api.login('user@example.com', 'password')
+
+// 2. Save session
+auth.saveSession({
+  token: loginResponse.token,
+  user: loginResponse.user
+})
+
+// 3. Check authentication
+if (auth.isAuthenticated()) {
+  // 4. Get token for API calls
+  const token = auth.getToken()
+  
+  if (token) {
+    // 5. Make authenticated API calls
+    const dashboard = await api.getDashboard(token)
+    const employees = await api.getEmployees(token, 1)
+  }
+}
+
+// 6. Logout when done
+const token = auth.getToken()
+if (token) {
+  await api.logout(token)
+  auth.clearSession()
+}
+```

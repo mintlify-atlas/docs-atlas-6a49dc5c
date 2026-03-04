@@ -1,0 +1,357 @@
+---
+title: "Employee Management"
+description: "Comprehensive employee data management with search, filtering, and detailed profile views"
+---
+
+## Overview
+
+The Employee Management module is the core of HCMatrix, providing a complete solution for managing your workforce data. From viewing employee lists to accessing detailed profiles, this feature streamlines how you interact with employee information.
+
+<Note>
+  All employee data is paginated for optimal performance, with 15 employees displayed per page by default.
+</Note>
+
+## Key Capabilities
+
+<CardGroup cols={2}>
+  <Card title="Search & Filter" icon="search">
+    Real-time search across employee names, emails, and job titles with debounced queries
+  </Card>
+  <Card title="Employee Directory" icon="users">
+    Paginated list view with sortable columns and status indicators
+  </Card>
+  <Card title="Detailed Profiles" icon="id-card">
+    Comprehensive employee profiles with personal and employment information
+  </Card>
+  <Card title="Data Export" icon="download">
+    Export employee data to CSV format for external reporting and analysis
+  </Card>
+</CardGroup>
+
+## Employee List View
+
+### Search Functionality
+
+The search feature provides instant employee lookup with a 500ms debounce for optimal performance:
+
+```tsx
+// Source: ~/workspace/source/app/employees/page.tsx:69-81
+const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value
+  setSearchQuery(value)
+  setCurrentPage(1)
+
+  if (debounceTimer.current) {
+    clearTimeout(debounceTimer.current)
+  }
+
+  debounceTimer.current = setTimeout(() => {
+    fetchEmployees(1, value)
+  }, 500)
+}
+```
+
+**Search Capabilities:**
+- Search by employee name
+- Search by email address
+- Search by job title
+- Automatic page reset on new search
+- Real-time results as you type
+
+### Employee Table
+
+The employee directory displays the following columns:
+
+| Column | Description | Features |
+|--------|-------------|----------|
+| **Employee** | Name and email | Clickable link to profile, primary contact info |
+| **Job Title** | Current position | Role identifier |
+| **Department** | Team/department | Categorized with badge styling |
+| **Location** | Work location | Office or remote location |
+| **Status** | Employment status | Color-coded badges (active, onboarding, on leave, etc.) |
+
+### Status Badges
+
+Employee status is displayed with intuitive color-coded badges:
+
+```tsx
+// Source: ~/workspace/source/app/employees/page.tsx:99-115
+const getStatusBadge = (status: string) => {
+  const statusMap: Record<string, { bg: string; text: string }> = {
+    active: { bg: 'bg-green-100', text: 'text-green-700' },
+    onboarding: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+    'on leave': { bg: 'bg-orange-100', text: 'text-orange-700' },
+    onleave: { bg: 'bg-orange-100', text: 'text-orange-700' },
+    inactive: { bg: 'bg-gray-100', text: 'text-gray-700' },
+    terminated: { bg: 'bg-red-100', text: 'text-red-700' },
+  }
+  const config = statusMap[status.toLowerCase()] || { bg: 'bg-gray-100', text: 'text-gray-700' }
+  return (
+    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${config.bg} ${config.text}`}>
+      {status}
+    </span>
+  )
+}
+```
+
+**Status Types:**
+- 🟢 **Active**: Currently employed and working
+- 🟡 **Onboarding**: New hire in training period
+- 🟠 **On Leave**: Temporarily away from work
+- ⚪ **Inactive**: Not currently active
+- 🔴 **Terminated**: Employment ended
+
+### Pagination
+
+Navigate through large employee datasets with intuitive pagination controls:
+
+```tsx
+// Source: ~/workspace/source/app/employees/page.tsx:83-97
+const handleNextPage = () => {
+  if (pagination?.hasNext) {
+    const next = currentPage + 1
+    setCurrentPage(next)
+    fetchEmployees(next, searchQuery)
+  }
+}
+
+const handlePrevPage = () => {
+  if (pagination?.hasPrev) {
+    const prev = currentPage - 1
+    setCurrentPage(prev)
+    fetchEmployees(prev, searchQuery)
+  }
+}
+```
+
+Pagination features:
+- Previous/Next navigation buttons
+- Current page indicator
+- Total pages display
+- Disabled state for unavailable navigation
+- Maintains search query across pages
+
+## Employee Detail View
+
+Click any employee name to access their comprehensive profile with tabbed sections.
+
+### Personal Information Tab
+
+Displays essential personal details:
+
+**Contact Information:**
+- Email address
+- Phone number
+- Physical address
+- Department assignment
+
+**Demographics:**
+- Date of birth (formatted as "Month Day, Year")
+- Age calculation
+- Personal identifiers
+
+**Emergency Contact:**
+- Next of kin name
+- Relationship to employee
+- Emergency contact phone number
+
+```tsx
+// Source: ~/workspace/source/app/employees/[id]/page.tsx:30-39
+const fetchEmployee = async () => {
+  try {
+    const data = await api.getEmployee(token, parseInt(employeeId))
+    setEmployee(data)
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to load employee')
+  } finally {
+    setIsLoading(false)
+  }
+}
+```
+
+### Employment Tab
+
+Provides comprehensive employment details:
+
+**Job Information:**
+- Current job title
+- Department and team
+- Employment type (Full-time, Part-time, Contract, etc.)
+- Start date with calendar icon
+- Direct manager (with avatar)
+
+**Compensation:**
+- Current annual salary (formatted with locale-specific formatting)
+- Pay frequency indicator
+- Salary history tracking
+
+**Tenure:**
+- Years of service
+- Months in current role
+- Anniversary tracking
+
+```tsx
+// Salary display example from source
+<p className="text-xl font-black text-gray-900">
+  {employee.salary != null
+    ? `$ ${employee.salary.toLocaleString()}`
+    : 'N/A'}
+  <span className="text-[10px] font-bold text-gray-400 ml-1 uppercase">/ Year</span>
+</p>
+```
+
+### Profile Header
+
+Each employee profile features:
+- Employee avatar/photo (96x96px rounded)
+- Full name prominently displayed
+- Job title subtitle
+- Current status badge
+- Employment type indicator
+- Navigation back to employee list
+
+## API Integration
+
+### Fetching Employees
+
+Retrieve paginated employee lists:
+
+```typescript
+// Source: ~/workspace/source/lib/api.ts:214-230
+async getEmployees(
+  token: string,
+  page: number = 1,
+  params?: Record<string, string>
+): Promise<EmployeesResponse> {
+  const queryString = new URLSearchParams({
+    page: page.toString(),
+    ...params,
+  }).toString()
+  const response = await apiCall<any>(
+    `/api/v1/employee?${queryString}`,
+    'GET',
+    undefined,
+    token
+  )
+  return normalizeEmployeesResponse(response, page)
+}
+```
+
+### Searching Employees
+
+Perform filtered searches:
+
+```typescript
+// Source: ~/workspace/source/lib/api.ts:246-260
+async searchEmployees(
+  token: string,
+  query: Record<string, string>,
+  page: number = 1
+): Promise<EmployeesResponse> {
+  const params = { ...query, page: page.toString() }
+  const queryString = new URLSearchParams(params).toString()
+  const response = await apiCall<any>(
+    `/api/v1/employee?${queryString}`,
+    'GET',
+    undefined,
+    token
+  )
+  return normalizeEmployeesResponse(response, page)
+}
+```
+
+### Fetching Single Employee
+
+Get detailed employee information:
+
+```typescript
+// Source: ~/workspace/source/lib/api.ts:233-243
+async getEmployee(token: string, id: number): Promise<EmployeeDetail> {
+  const response = await apiCall<any>(
+    `/api/v1/employee/${id}`,
+    'GET',
+    undefined,
+    token
+  )
+  const raw = response.data || response
+  return mapEmployeeDetail(raw)
+}
+```
+
+## Data Structures
+
+### Employee Interface
+
+```typescript
+export interface Employee {
+  id: number
+  name: string
+  email: string
+  job_title: string
+  department: string
+  location: string
+  employment_type: string
+  status: string
+  start_date: string
+  avatar?: string
+}
+```
+
+### EmployeeDetail Interface
+
+```typescript
+export interface EmployeeDetail extends Employee {
+  phone: string
+  date_of_birth: string
+  address: string
+  salary: number
+  manager: string
+  manager_id: number
+  next_of_kin_name: string
+  next_of_kin_relationship: string
+  next_of_kin_phone: string
+  tenure_years: number
+  tenure_months: number
+  spouse: string | null
+}
+```
+
+## Best Practices
+
+<Tip>
+  **Use Search Efficiently**: The search is debounced, so you can type naturally without overwhelming the API with requests.
+</Tip>
+
+<Tip>
+  **Review Profiles Regularly**: Keep employee information up-to-date by reviewing profiles and updating details as changes occur.
+</Tip>
+
+<Tip>
+  **Export for Reporting**: Use the CSV export feature for creating reports, sharing with stakeholders, or importing into other systems.
+</Tip>
+
+<Warning>
+  **Sensitive Data**: Employee profiles contain sensitive personal information including salary, contact details, and emergency contacts. Ensure proper access controls are in place.
+</Warning>
+
+## Empty States
+
+When no employees match the search criteria:
+
+```tsx
+<div className="text-center">
+  <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+    <Users className="w-8 h-8 text-gray-300" />
+  </div>
+  <p className="text-gray-900 font-bold mb-1">No employees found</p>
+  <p className="text-sm text-gray-500">Try adjusting your search criteria</p>
+</div>
+```
+
+## Responsive Design
+
+The employee management interface is fully responsive:
+- Mobile-optimized table scrolling
+- Stacked layout on small screens
+- Touch-friendly pagination controls
+- Adaptive search bar positioning

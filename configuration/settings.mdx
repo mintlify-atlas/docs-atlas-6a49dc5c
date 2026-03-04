@@ -1,0 +1,538 @@
+---
+title: Settings
+description: Configure platform settings, user preferences, and organization configuration in HCMatrix
+---
+
+## Overview
+
+The Settings module in HCMatrix allows administrators and users to configure platform preferences, manage organization settings, and customize the application experience.
+
+<Note>
+  The Settings page is currently under development. This documentation outlines the planned architecture and available configuration options.
+</Note>
+
+## Accessing Settings
+
+The Settings page is accessible at `/settings` for authenticated users.
+
+### Route Protection
+
+From `app/settings/page.tsx:9-16`:
+
+```typescript page.tsx
+export default function SettingsPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!auth.getToken()) {
+      router.push('/auth/login')
+    }
+  }, [router])
+
+  // Settings content...
+}
+```
+
+<Warning>
+  Only authenticated users can access settings. Unauthenticated users are automatically redirected to `/auth/login`.
+</Warning>
+
+## Current Implementation
+
+The settings page currently displays a placeholder from `app/settings/page.tsx:18-30`:
+
+```typescript page.tsx
+return (
+  <div className="min-h-screen bg-gray-50">
+    <Sidebar />
+    <div className="ml-64 flex flex-col min-h-screen">
+      <Header title="Settings" />
+      <main className="flex-1 p-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <p className="text-gray-600">Settings module coming soon...</p>
+        </div>
+      </main>
+    </div>
+  </div>
+)
+```
+
+## Planned Features
+
+### User Preferences
+
+Settings for individual user customization:
+
+<CardGroup cols={2}>
+  <Card title="Profile Settings" icon="user">
+    Name, email, profile picture, contact information
+  </Card>
+  
+  <Card title="Theme Preferences" icon="palette">
+    Light/dark mode, color scheme, UI density
+  </Card>
+  
+  <Card title="Notifications" icon="bell">
+    Email preferences, push notifications, alert settings
+  </Card>
+  
+  <Card title="Language & Region" icon="globe">
+    Locale, timezone, date/time format
+  </Card>
+</CardGroup>
+
+### Organization Settings
+
+Enterprise-level configuration:
+
+<AccordionGroup>
+  <Accordion title="Company Information">
+    - Company name and logo
+    - Industry and size
+    - Primary contact information
+    - Legal entity details
+  </Accordion>
+  
+  <Accordion title="Department Management">
+    - Add/edit/remove departments
+    - Department hierarchy
+    - Department heads
+    - Cost centers
+  </Accordion>
+  
+  <Accordion title="Location Management">
+    - Office locations
+    - Remote work policies
+    - Timezone settings
+    - Address information
+  </Accordion>
+  
+  <Accordion title="Access Control">
+    - Role definitions
+    - Permission management
+    - User access levels
+    - Security policies
+  </Accordion>
+</AccordionGroup>
+
+## Theme Configuration
+
+HCMatrix supports comprehensive theming through CSS variables and the `next-themes` package.
+
+### Theme System
+
+The theme system is configured in `app/globals.css:6-75` with full light and dark mode support:
+
+```css globals.css
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  /* Additional color variables... */
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  /* Additional color variables... */
+}
+```
+
+### Available Theme Variables
+
+<Tabs>
+  <Tab title="Core Colors">
+    ```css
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    ```
+  </Tab>
+  
+  <Tab title="Interactive Colors">
+    ```css
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    ```
+  </Tab>
+  
+  <Tab title="Feedback Colors">
+    ```css
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    ```
+  </Tab>
+  
+  <Tab title="UI Elements">
+    ```css
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --radius: 0.625rem;
+    ```
+  </Tab>
+  
+  <Tab title="Chart Colors">
+    ```css
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    ```
+  </Tab>
+  
+  <Tab title="Sidebar Colors">
+    ```css
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+    ```
+  </Tab>
+</Tabs>
+
+### Theme Implementation
+
+Implement theme switching using `next-themes`:
+
+```typescript
+import { useTheme } from 'next-themes'
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+  
+  return (
+    <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+      Toggle theme
+    </button>
+  )
+}
+```
+
+<Info>
+  Theme preference is automatically persisted in localStorage and applied on page load.
+</Info>
+
+## Component Configuration
+
+HCMatrix uses shadcn/ui components with customizable configuration.
+
+### Component Aliases
+
+From `components.json:13-19`:
+
+```json components.json
+{
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  }
+}
+```
+
+### Adding New Components
+
+Install shadcn/ui components:
+
+```bash
+npx shadcn@latest add [component-name]
+```
+
+Example:
+```bash
+npx shadcn@latest add tabs
+npx shadcn@latest add form
+npx shadcn@latest add select
+```
+
+### Component Style
+
+HCMatrix uses the **New York** style variant:
+
+```json components.json
+{
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true
+}
+```
+
+<Note>
+  The New York style provides a more refined, professional appearance compared to the default style.
+</Note>
+
+## Data Configuration
+
+### Local Storage Keys
+
+HCMatrix stores configuration in browser localStorage:
+
+<ParamField path="hcmatrix_session" type="object">
+  User authentication session containing token and user information.
+  
+  **Structure:**
+  ```json
+  {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "user": {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com"
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="theme" type="string">
+  User's theme preference managed by `next-themes`.
+  
+  **Values:** `"light"`, `"dark"`, or `"system"`
+</ParamField>
+
+### Clearing Configuration
+
+Reset user configuration:
+
+```typescript
+// Clear authentication
+import { auth } from '@/lib/auth'
+auth.clearSession()
+
+// Clear theme preference
+localStorage.removeItem('theme')
+
+// Clear all HCMatrix data
+Object.keys(localStorage)
+  .filter(key => key.startsWith('hcmatrix_'))
+  .forEach(key => localStorage.removeItem(key))
+```
+
+## API Configuration
+
+Settings can be synchronized with the backend API for multi-device consistency.
+
+### Recommended API Endpoints
+
+<CodeGroup>
+  ```typescript GET /api/v1/settings
+  // Fetch user settings
+  const settings = await apiCall(
+    '/api/v1/settings',
+    'GET',
+    undefined,
+    token
+  )
+  ```
+  
+  ```typescript PUT /api/v1/settings
+  // Update user settings
+  await apiCall(
+    '/api/v1/settings',
+    'PUT',
+    { theme: 'dark', locale: 'en-US' },
+    token
+  )
+  ```
+  
+  ```typescript GET /api/v1/organization/settings
+  // Fetch organization settings (admin only)
+  const orgSettings = await apiCall(
+    '/api/v1/organization/settings',
+    'GET',
+    undefined,
+    token
+  )
+  ```
+</CodeGroup>
+
+## Security Considerations
+
+<Warning>
+  **Important security practices for settings:**
+</Warning>
+
+### Sensitive Data
+
+<AccordionGroup>
+  <Accordion title="Never Store Passwords Locally">
+    - Use secure authentication tokens only
+    - Clear tokens on logout
+    - Implement token expiration
+  </Accordion>
+  
+  <Accordion title="Validate User Input">
+    - Use Zod schemas for validation
+    - Sanitize all user inputs
+    - Implement rate limiting for updates
+  </Accordion>
+  
+  <Accordion title="Role-Based Access">
+    - Verify user permissions before showing settings
+    - Separate user vs. admin settings
+    - Audit setting changes
+  </Accordion>
+  
+  <Accordion title="Secure API Communication">
+    - Always use HTTPS
+    - Include CSRF tokens
+    - Validate responses
+  </Accordion>
+</AccordionGroup>
+
+## Future Development
+
+### Planned Settings Sections
+
+<Steps>
+  <Step title="User Profile">
+    Personal information, avatar upload, contact details
+  </Step>
+  
+  <Step title="Notification Preferences">
+    Email notifications, in-app alerts, notification frequency
+  </Step>
+  
+  <Step title="Privacy & Security">
+    Two-factor authentication, login history, session management
+  </Step>
+  
+  <Step title="Organization Settings">
+    Company info, departments, locations, branding
+  </Step>
+  
+  <Step title="Integration Settings">
+    Third-party integrations, API keys, webhooks
+  </Step>
+  
+  <Step title="Billing & Subscription">
+    Plan details, payment methods, usage statistics
+  </Step>
+</Steps>
+
+### Recommended Implementation
+
+Create a tabbed settings interface:
+
+```typescript settings/page.tsx
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+export default function SettingsPage() {
+  return (
+    <Tabs defaultValue="profile">
+      <TabsList>
+        <TabsTrigger value="profile">Profile</TabsTrigger>
+        <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        <TabsTrigger value="security">Security</TabsTrigger>
+        <TabsTrigger value="organization">Organization</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="profile">
+        {/* Profile settings form */}
+      </TabsContent>
+      
+      <TabsContent value="notifications">
+        {/* Notification preferences */}
+      </TabsContent>
+      
+      {/* Additional tabs... */}
+    </Tabs>
+  )
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Validate Changes" icon="shield-check">
+    Use react-hook-form + Zod for form validation
+  </Card>
+  
+  <Card title="Provide Feedback" icon="comment">
+    Show success/error toasts using Sonner
+  </Card>
+  
+  <Card title="Optimize Updates" icon="bolt">
+    Debounce auto-save and batch API calls
+  </Card>
+  
+  <Card title="Handle Errors" icon="triangle-exclamation">
+    Gracefully handle API failures with retry logic
+  </Card>
+</CardGroup>
+
+## Example: Settings Form
+
+Implement a settings form with validation:
+
+```typescript
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import { toast } from 'sonner'
+
+const settingsSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  theme: z.enum(['light', 'dark', 'system']),
+})
+
+type SettingsFormValues = z.infer<typeof settingsSchema>
+
+export function SettingsForm() {
+  const form = useForm<SettingsFormValues>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      theme: 'system',
+    },
+  })
+
+  async function onSubmit(data: SettingsFormValues) {
+    try {
+      // Save to API
+      await apiCall('/api/v1/settings', 'PUT', data, token)
+      toast.success('Settings saved successfully')
+    } catch (error) {
+      toast.error('Failed to save settings')
+    }
+  }
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      {/* Form fields */}
+    </form>
+  )
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Setup" icon="gear" href="/configuration/environment-setup">
+    Set up your development environment
+  </Card>
+  <Card title="API Integration" icon="plug" href="/configuration/api-integration">
+    Configure API endpoints and authentication
+  </Card>
+</CardGroup>

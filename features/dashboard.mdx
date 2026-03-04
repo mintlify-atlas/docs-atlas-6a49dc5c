@@ -1,0 +1,193 @@
+---
+title: "Dashboard"
+description: "Get a comprehensive overview of your organization's key metrics and insights at a glance"
+---
+
+## Overview
+
+The HCMatrix Dashboard provides a centralized view of your organization's critical HR metrics, employee data, and upcoming events. It's designed to give HR professionals and managers real-time insights into workforce trends, attendance patterns, and actionable items that require attention.
+
+<Note>
+  The dashboard automatically refreshes data from the backend API to ensure you always have the most current information about your organization.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Real-Time Metrics" icon="chart-line">
+    Track total employees, new hires, upcoming events, and open positions with live data updates
+  </Card>
+  <Card title="Attendance Overview" icon="clock">
+    Monitor today's attendance with visual indicators showing in-office vs. out-of-office staff
+  </Card>
+  <Card title="Action Items" icon="list-check">
+    Stay on top of pending tasks with prioritized action items and completion tracking
+  </Card>
+  <Card title="Analytics Charts" icon="chart-pie">
+    Visualize headcount growth trends and department distribution with interactive charts
+  </Card>
+</CardGroup>
+
+## Dashboard Metrics
+
+### Primary Statistics Cards
+
+The dashboard displays four critical metrics at the top of the page:
+
+1. **Total Employees** - Current workforce size with month-over-month growth percentage
+2. **New Hires This Month** - Number of employees who joined during the current month
+3. **Upcoming Events** - Count of birthdays, anniversaries, and other celebrations
+4. **Open Positions** - Active job openings across all departments
+
+Each metric card includes:
+- Current value displayed prominently
+- Contextual information (trends, upcoming changes)
+- Color-coded icons for quick visual recognition
+- Hover effects for enhanced interactivity
+
+### Today's Attendance
+
+The attendance widget shows:
+- **In Office / Remote**: Number of active employees (189 shown in example)
+- **Out / On Leave**: Number of absent employees (58 shown in example)
+- Visual progress bar showing attendance percentage
+- Calculated workforce activity rate
+
+```tsx
+// Example: Fetching dashboard data
+const fetchDashboard = async () => {
+  const token = auth.getToken()
+  const data = await api.getDashboard(token)
+  setDashboardData(data)
+}
+```
+
+### Action Items Panel
+
+Manage your to-do list with:
+- **Priority Levels**: High, medium, and low priority indicators
+- **Completion Tracking**: Checkbox interface for marking tasks complete
+- **Visual Status**: Completed items shown with strikethrough styling
+- **Quick Actions**: "View All Tasks" button for comprehensive task management
+
+Example action items include:
+- Approve leave requests
+- Schedule interviews
+- Send benefit enrollment reminders
+
+## Analytics & Visualizations
+
+### Headcount Growth Chart
+
+Track your organization's growth with a 7-month trend line showing:
+- Monthly employee count progression
+- Visual data points with hover tooltips
+- Smooth curve interpolation for trend analysis
+- Integration with live dashboard data
+
+The chart is built using Recharts and displays data from August through the current month:
+
+```tsx
+const headcountData = [
+  { month: 'Aug', value: 195 },
+  { month: 'Sep', value: 210 },
+  { month: 'Oct', value: 215 },
+  { month: 'Nov', value: 225 },
+  { month: 'Dec', value: 230 },
+  { month: 'Jan', value: 240 },
+  { month: 'Feb', value: dashboardData?.total_employees || 247 },
+]
+```
+
+### Department Distribution
+
+Visualize workforce allocation across departments with an interactive pie chart:
+
+- **Engineering**: 85 employees (blue)
+- **Sales**: 52 employees (green)
+- **Marketing**: 38 employees (orange)
+- **HR**: 15 employees (purple)
+- **Product**: 28 employees (pink)
+- **Finance**: 12 employees (cyan)
+- **Other**: 17 employees (gray)
+
+The donut chart features:
+- Color-coded segments for each department
+- Hover tooltips with exact counts
+- Legend showing top departments
+- Padding between segments for clarity
+
+## Upcoming Events
+
+Stay connected with your team through the events section:
+
+<Card title="Birthdays & Anniversaries" icon="calendar">
+  The dashboard highlights upcoming employee birthdays and work anniversaries, helping you celebrate important milestones and maintain team morale.
+</Card>
+
+Each event card displays:
+- Employee name
+- Event date
+- Event type (birthday, anniversary)
+- Celebratory icon (🎂)
+
+## API Integration
+
+The dashboard retrieves data from the `/api/v1/dashboard` endpoint:
+
+```typescript
+// Source: ~/workspace/source/lib/api.ts:201-211
+async getDashboard(token: string): Promise<DashboardData> {
+  const response = await apiCall<any>('/api/v1/dashboard', 'GET', undefined, token)
+  const data = response.data || response
+  return {
+    total_employees: data.total_employees ?? 0,
+    new_hire_count: data.new_hire_count ?? 0,
+    upcoming_event: data.upcoming_event ?? 0,
+    open_positions: data.open_positions ?? 0,
+  }
+}
+```
+
+## Best Practices
+
+<Tip>
+  **Regular Monitoring**: Check the dashboard daily to stay informed about workforce changes, pending actions, and attendance patterns.
+</Tip>
+
+<Tip>
+  **Action Item Management**: Prioritize high-priority action items first and mark tasks as complete to maintain an organized workflow.
+</Tip>
+
+<Tip>
+  **Trend Analysis**: Use the headcount growth chart to identify hiring patterns and forecast future workforce needs.
+</Tip>
+
+## Loading States
+
+The dashboard implements a smooth loading experience:
+
+```tsx
+if (isLoading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="mt-4 text-gray-600 font-medium">Loading dashboard...</p>
+      </div>
+    </div>
+  )
+}
+```
+
+## Error Handling
+
+Errors are displayed prominently at the top of the dashboard content area with clear messaging:
+
+```tsx
+{error && (
+  <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+    {error}
+  </div>
+)}
+```

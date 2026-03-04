@@ -1,0 +1,336 @@
+---
+title: "Recruitment"
+description: "Manage your hiring pipeline from job posting to candidate onboarding with comprehensive recruitment tools"
+---
+
+## Overview
+
+The Recruitment module in HCMatrix streamlines the entire hiring process, from creating job requisitions to onboarding new employees. Track open positions, manage candidates, schedule interviews, and make data-driven hiring decisions.
+
+<Note>
+  The Recruitment module is currently under development. Open position counts are visible on the dashboard to track hiring needs.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Job Requisitions" icon="briefcase">
+    Create and manage job openings with detailed descriptions and requirements
+  </Card>
+  <Card title="Candidate Pipeline" icon="users">
+    Track candidates through every stage of the hiring process
+  </Card>
+  <Card title="Interview Scheduling" icon="calendar-check">
+    Coordinate interviews with candidates and hiring teams
+  </Card>
+  <Card title="Applicant Tracking" icon="clipboard-list">
+    Centralized ATS for managing applications and candidate communications
+  </Card>
+</CardGroup>
+
+## Dashboard Integration
+
+Recuitment metrics are prominently displayed on the main dashboard:
+
+### Open Positions Card
+
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:156-167
+<div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+  <div className="flex items-start justify-between">
+    <div>
+      <p className="text-gray-500 text-xs sm:text-sm font-medium">Open Positions</p>
+      <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{dashboardData?.open_positions ?? 0}</p>
+      <p className="text-gray-500 text-xs sm:text-sm mt-2">Across 6 departments</p>
+    </div>
+    <div className="p-2 sm:p-2.5 bg-orange-50 rounded-xl">
+      <Briefcase className="w-5 h-5 text-orange-600" />
+    </div>
+  </div>
+</div>
+```
+
+**Displays:**
+- Total number of open positions
+- Distribution across departments
+- Visual briefcase icon in orange theme
+- Real-time updates from API
+
+### Dashboard API Data
+
+```typescript
+// Source: ~/workspace/source/lib/api.ts:19-24
+export interface DashboardData {
+  total_employees: number
+  new_hire_count: number
+  upcoming_event: number
+  open_positions: number  // Recruitment metric
+}
+```
+
+### Action Items Integration
+
+Recruitment tasks appear in the dashboard's action items:
+
+```tsx
+const actionItems = [
+  { id: 2, title: 'Schedule interviews for Marketing position', priority: 'medium', done: true },
+  // ... other action items
+]
+```
+
+## Planned Features
+
+<Card title="Full Recruitment ATS" icon="user-plus">
+  A complete Applicant Tracking System (ATS) is in development to manage the entire recruitment lifecycle.
+</Card>
+
+### Job Requisition Management
+
+**Create Job Openings:**
+- Job title and description
+- Department and location
+- Salary range and benefits
+- Required qualifications and skills
+- Employment type (full-time, part-time, contract)
+- Number of openings
+- Target start date
+
+**Approval Workflows:**
+- Multi-level requisition approval
+- Budget approval for new positions
+- Headcount authorization
+- Job posting review
+
+**Job Board Integration:**
+- Post to company careers page
+- Publish to LinkedIn, Indeed, Glassdoor
+- Social media sharing
+- Internal job board for employee referrals
+
+### Candidate Management
+
+**Application Intake:**
+- Custom application forms
+- Resume/CV upload and parsing
+- Cover letter collection
+- Portfolio and work sample uploads
+- Video introduction submissions
+
+**Candidate Pipeline Stages:**
+1. **New Applications**: Recently submitted applications
+2. **Screening**: Initial resume review
+3. **Phone Screen**: Brief phone interview
+4. **Interview**: In-depth interview rounds
+5. **Assessment**: Skills tests and assignments
+6. **Reference Check**: Contact provided references
+7. **Offer**: Extend job offer
+8. **Hired**: Accepted offers and onboarding
+9. **Rejected**: Declined candidates with reasons
+
+**Candidate Profiles:**
+- Complete application history
+- Resume and document storage
+- Interview feedback and notes
+- Scoring and ratings
+- Communication timeline
+- Attachment management
+
+### Interview Management
+
+**Interview Scheduling:**
+- Calendar integration (Google, Outlook)
+- Automated interview invitations
+- Timezone handling for remote interviews
+- Interview panel coordination
+- Video conferencing links (Zoom, Teams)
+- Confirmation and reminder emails
+
+**Interview Guides:**
+- Structured interview templates
+- Role-specific question banks
+- Behavioral and technical questions
+- Scoring rubrics
+- Competency frameworks
+
+**Feedback Collection:**
+- Digital scorecards
+- Rating scales and comments
+- Consensus building tools
+- Hiring committee discussions
+- Final decision tracking
+
+### Collaboration Features
+
+**Hiring Team:**
+- Assign recruiters to positions
+- Designate hiring managers
+- Include interview panel members
+- Share candidate profiles internally
+- Collaborative decision-making
+
+**Communication:**
+- Email templates for candidate outreach
+- SMS notifications
+- Automated status updates
+- Rejection email templates
+- Offer letter generation
+
+### Compliance & Reporting
+
+**EEO Compliance:**
+- EEOC reporting
+- Diversity tracking
+- Adverse impact analysis
+- OFCCP compliance
+
+**Recruitment Analytics:**
+- Time-to-hire metrics
+- Source of hire tracking
+- Funnel conversion rates
+- Cost-per-hire calculations
+- Offer acceptance rates
+- Candidate experience metrics
+
+### Onboarding Integration
+
+**New Hire Transition:**
+- Automatic employee record creation
+- Onboarding checklist generation
+- Document collection (I-9, W-4)
+- Equipment provisioning requests
+- First-day preparation
+- Welcome email campaigns
+
+**Preboarding:**
+- Offer acceptance tracking
+- Background check coordination
+- Drug screening management
+- New hire paperwork portal
+- Benefits enrollment initiation
+
+## Recruitment Workflows
+
+### Standard Hiring Process
+
+1. **Job Requisition:**
+   - Manager submits requisition
+   - HR reviews and approves
+   - Finance approves budget
+   - Job posting created
+
+2. **Sourcing:**
+   - Post to job boards
+   - Share on social media
+   - Employee referral program
+   - Proactive candidate outreach
+
+3. **Application Review:**
+   - Screen incoming applications
+   - Filter by qualifications
+   - Identify top candidates
+   - Move to next stage
+
+4. **Interviewing:**
+   - Phone screen qualified candidates
+   - Schedule in-person/video interviews
+   - Conduct assessment rounds
+   - Gather hiring team feedback
+
+5. **Selection:**
+   - Review all candidate feedback
+   - Check references
+   - Make hiring decision
+   - Prepare job offer
+
+6. **Offer & Close:**
+   - Extend offer to candidate
+   - Negotiate terms if needed
+   - Obtain offer acceptance
+   - Begin onboarding process
+   - Notify other candidates
+
+## Access Control
+
+The recruitment module enforces authentication:
+
+```tsx
+// Source: ~/workspace/source/app/recruitment/page.tsx:12-16
+useEffect(() => {
+  if (!auth.getToken()) {
+    router.push('/auth/login')
+  }
+}, [router])
+```
+
+## Best Practices
+
+<Tip>
+  **Speed Matters**: Reduce time-to-hire by promptly reviewing applications and scheduling interviews. Top candidates are often off the market within 10 days.
+</Tip>
+
+<Tip>
+  **Consistent Process**: Use structured interviews and standardized scorecards to ensure fair and consistent candidate evaluation.
+</Tip>
+
+<Tip>
+  **Candidate Experience**: Communicate regularly with candidates, provide timely updates, and deliver feedback to maintain a positive employer brand.
+</Tip>
+
+<Tip>
+  **Data-Driven Decisions**: Track recruitment metrics to identify bottlenecks, improve sourcing strategies, and optimize the hiring process.
+</Tip>
+
+<Warning>
+  **Legal Compliance**: Ensure all recruitment practices comply with employment laws, including anti-discrimination regulations and data privacy requirements.
+</Warning>
+
+## Integration Points
+
+### Employee Management
+
+Seamless transition from candidate to employee:
+
+- Accepted offers automatically create employee records
+- Candidate data populates employee profiles
+- Employment start dates trigger onboarding
+- New hire count updates on dashboard
+
+```tsx
+// Dashboard shows new hires this month
+<p className="text-gray-500 text-xs sm:text-sm font-medium">New Hires This Month</p>
+<p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{dashboardData?.new_hire_count ?? 0}</p>
+```
+
+### Calendar Integration
+
+Interview scheduling syncs with the Calendar module:
+
+- Interview appointments appear on company calendar
+- Hiring team availability checking
+- Automatic meeting room booking
+- Interview reminders and notifications
+
+## User Interface
+
+The recruitment module will feature:
+
+- Kanban-style candidate pipeline
+- Drag-and-drop candidate movement
+- Bulk actions for efficiency
+- Advanced search and filtering
+- Mobile-responsive design
+- Email integration
+- Document preview and annotation
+
+## Future Enhancements
+
+Planned improvements include:
+
+- **AI-Powered Screening**: Automated resume screening and candidate matching
+- **Video Interviewing**: Built-in video interview platform
+- **Skills Assessments**: Integrated technical and behavioral assessments
+- **Career Site Builder**: Custom careers page with job listings
+- **Recruitment Marketing**: Campaign management for talent attraction
+- **Alumni Network**: Re-engage previous candidates and employees
+- **Chatbot**: AI assistant for candidate questions

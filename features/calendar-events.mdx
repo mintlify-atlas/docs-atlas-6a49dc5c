@@ -1,0 +1,352 @@
+---
+title: "Calendar & Events"
+description: "Manage company events, employee milestones, and important dates with an integrated calendar system"
+---
+
+## Overview
+
+The Calendar & Events module in HCMatrix helps you track and celebrate important company and employee milestones. From birthdays and work anniversaries to company events and holidays, this feature ensures you never miss an important date.
+
+<Note>
+  The Calendar module is currently under development. The dashboard displays upcoming events including birthdays and anniversaries.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Event Tracking" icon="calendar-days">
+    Monitor upcoming birthdays, anniversaries, and company events
+  </Card>
+  <Card title="Milestone Celebrations" icon="cake">
+    Recognize employee birthdays and work anniversaries automatically
+  </Card>
+  <Card title="Company Calendar" icon="calendar">
+    Centralized calendar for holidays, company events, and important dates
+  </Card>
+  <Card title="Event Notifications" icon="bell">
+    Automated reminders for upcoming events and celebrations
+  </Card>
+</CardGroup>
+
+## Dashboard Integration
+
+The dashboard prominently displays event information in multiple areas:
+
+### Upcoming Events Card
+
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:143-154
+<div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+  <div className="flex items-start justify-between">
+    <div>
+      <p className="text-gray-500 text-xs sm:text-sm font-medium">Upcoming Events</p>
+      <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{dashboardData?.upcoming_event ?? 0}</p>
+      <p className="text-gray-500 text-xs sm:text-sm mt-2">Birthdays &amp; anniversaries</p>
+    </div>
+    <div className="p-2 sm:p-2.5 bg-purple-50 rounded-xl">
+      <Calendar className="w-5 h-5 text-purple-600" />
+    </div>
+  </div>
+</div>
+```
+
+**Displays:**
+- Total count of upcoming events
+- Event type description (birthdays & anniversaries)
+- Purple-themed calendar icon
+- Real-time updates from API
+
+### Upcoming Birthdays & Anniversaries Section
+
+The dashboard features a dedicated section for celebrating team members:
+
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:86-91
+const upcomingBirthdays = [
+  { name: 'Sarah Johnson', date: 'Feb 15' },
+  { name: 'Michael Rodriguez', date: 'Feb 18' },
+  { name: 'Emily Chen', date: 'Feb 22' },
+]
+```
+
+**Event Cards Display:**
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:309-328
+<div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+  <h3 className="text-base font-bold text-gray-900 mb-6 flex items-center gap-2">
+    <Calendar className="w-4 h-4 text-gray-500" />
+    Upcoming Birthdays &amp; Anniversaries
+  </h3>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {upcomingBirthdays.map((person, index) => (
+      <div key={index} className="p-4 bg-purple-50/50 rounded-xl border border-purple-100 flex items-center gap-4 group hover:bg-purple-50 transition-colors">
+        <div className="w-12 h-12 rounded-full bg-white border border-purple-100 flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform">
+          🎂
+        </div>
+        <div>
+          <p className="font-bold text-gray-900 text-sm">{person.name}</p>
+          <p className="text-xs font-medium text-purple-600">{person.date}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+```
+
+**Features:**
+- Employee name and celebration date
+- Celebratory emoji (birthday cake)
+- Purple accent theme for events
+- Hover effects with scale animation
+- Responsive grid layout (3 columns on desktop)
+
+## Event Types
+
+### Employee Milestones
+
+**Birthdays:**
+- Automatic detection from employee birth dates
+- Upcoming birthday notifications
+- Team celebration reminders
+- Birthday cards and gift tracking
+
+**Work Anniversaries:**
+- Calculated from employee start date
+- Multi-year milestone recognition
+- Service awards and recognition
+- Anniversary celebration planning
+
+### Company Events
+
+**Holidays:**
+- National and regional holidays
+- Paid time off (PTO) days
+- Office closure dates
+- Holiday party scheduling
+
+**Company Events:**
+- Team building activities
+- Training sessions and workshops
+- All-hands meetings
+- Social gatherings and celebrations
+- Conference and trade show attendance
+
+**Important Dates:**
+- Benefits enrollment periods
+- Performance review deadlines
+- Compliance training due dates
+- Fiscal year milestones
+
+## Planned Features
+
+<Card title="Full Calendar Module" icon="calendar-star">
+  A comprehensive calendar system is in development with advanced event management and scheduling capabilities.
+</Card>
+
+### Calendar Views
+
+**Multiple View Options:**
+- Month view with event indicators
+- Week view with hourly breakdown
+- Day view for detailed scheduling
+- Agenda/list view for upcoming events
+- Year view for long-term planning
+
+**Filtering:**
+- Filter by event type
+- Filter by department/team
+- Filter by location
+- Show/hide event categories
+
+### Event Management
+
+**Create Events:**
+- Event title and description
+- Date and time selection
+- Location (in-office, virtual, external)
+- Event category/type
+- Attendee list
+- Recurring event options
+- Reminder settings
+
+**Event Details:**
+- Rich text descriptions
+- Attachment support
+- RSVP tracking
+- Event capacity limits
+- Registration forms
+- Virtual meeting links
+
+**Recurring Events:**
+- Daily, weekly, monthly, yearly patterns
+- Custom recurrence rules
+- End date or occurrence count
+- Exception dates
+
+### Integrations
+
+**External Calendars:**
+- Google Calendar sync
+- Microsoft Outlook integration
+- Apple Calendar (iCal) export
+- Two-way calendar synchronization
+- Calendar feed subscriptions
+
+**Employee Data:**
+- Automatic birthday imports from employee records
+- Work anniversary calculations from start dates
+- Department-specific events
+- Location-based holiday calendars
+
+### Notifications & Reminders
+
+**Notification Types:**
+- Email reminders
+- In-app notifications
+- SMS alerts (optional)
+- Calendar invitations
+
+**Reminder Timing:**
+- Day-of notifications
+- Day-before reminders
+- Week-before alerts
+- Custom reminder schedules
+
+### Employee Self-Service
+
+**Personal Calendar:**
+- View personal PTO days
+- See assigned events
+- RSVP to company events
+- Subscribe to calendar feeds
+- Add events to personal calendar apps
+
+**Team Calendars:**
+- View team member availability
+- See team events and meetings
+- Department-specific calendars
+- Cross-team event visibility
+
+## Data Structure
+
+### Dashboard API Integration
+
+```typescript
+// Source: ~/workspace/source/lib/api.ts:19-24
+export interface DashboardData {
+  total_employees: number
+  new_hire_count: number
+  upcoming_event: number  // Event count
+  open_positions: number
+}
+```
+
+### Employee Birth Date
+
+Employee profiles include birth date information:
+
+```typescript
+export interface EmployeeDetail extends Employee {
+  date_of_birth: string  // Used for birthday tracking
+  start_date: string     // Used for anniversary tracking
+  // ... other fields
+}
+```
+
+Birth dates are displayed in employee profiles:
+
+```tsx
+// Source: ~/workspace/source/app/employees/[id]/page.tsx:178-184
+<div className="space-y-1">
+  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date of Birth</p>
+  <p className="text-sm text-gray-900 font-bold items-center gap-1.5 flex">
+    {employee.date_of_birth
+      ? new Date(employee.date_of_birth).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : 'N/A'}
+  </p>
+</div>
+```
+
+## Access Control
+
+The calendar module enforces authentication:
+
+```tsx
+// Source: ~/workspace/source/app/calendar/page.tsx:12-16
+useEffect(() => {
+  if (!auth.getToken()) {
+    router.push('/auth/login')
+  }
+}, [router])
+```
+
+## Best Practices
+
+<Tip>
+  **Celebrate Milestones**: Use the birthday and anniversary tracking to recognize employees and boost morale. Personal recognition goes a long way.
+</Tip>
+
+<Tip>
+  **Plan Ahead**: Review upcoming events weekly to ensure adequate preparation for celebrations, meetings, and company gatherings.
+</Tip>
+
+<Tip>
+  **Team Visibility**: Share team calendars to improve coordination, reduce scheduling conflicts, and keep everyone informed.
+</Tip>
+
+<Tip>
+  **Automate Reminders**: Set up automatic reminders for recurring events like benefits enrollment periods and compliance deadlines.
+</Tip>
+
+<Warning>
+  **Privacy Considerations**: Some employees may prefer to keep birthdays private. Provide opt-out options for celebration announcements.
+</Warning>
+
+## User Interface
+
+The calendar interface will feature:
+
+- Clean, modern calendar grid
+- Color-coded event categories
+- Drag-and-drop event creation
+- Quick event preview on hover
+- Mobile-responsive design
+- Touch-friendly controls
+- Print-friendly views
+
+## Integration Points
+
+### Interview Scheduling
+
+Calendar integrates with the Recruitment module:
+
+- Interview appointments on calendar
+- Hiring team availability
+- Interview room booking
+- Candidate meeting links
+
+### Attendance Tracking
+
+Calendar shows attendance-related events:
+
+- PTO and vacation days
+- Sick leave
+- Company holidays
+- Office closure dates
+
+### Dashboard Visibility
+
+Event metrics appear prominently on the dashboard for quick access and awareness.
+
+## Future Enhancements
+
+Planned improvements include:
+
+- **Smart Scheduling**: AI-powered meeting scheduling assistant
+- **Room Booking**: Conference room and resource reservation
+- **Waitlists**: Event capacity management with waitlists
+- **Event Photos**: Photo galleries for past events
+- **Budget Tracking**: Event budget planning and tracking
+- **Volunteer Coordination**: Sign-up sheets for event volunteers
+- **Catering Integration**: Food ordering for events
+- **Video Conferencing**: Built-in virtual meeting platform

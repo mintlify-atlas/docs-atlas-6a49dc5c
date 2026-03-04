@@ -1,0 +1,218 @@
+---
+title: "Attendance Tracking"
+description: "Monitor employee time and attendance with real-time tracking and reporting capabilities"
+---
+
+## Overview
+
+The Attendance Tracking module in HCMatrix enables organizations to monitor employee presence, track work hours, and manage time-off requests. This feature provides real-time visibility into who's in the office, working remotely, or on leave.
+
+<Note>
+  The Attendance Tracking module is currently under development. The dashboard provides a preview of attendance data with the "Today's Attendance" widget.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Real-Time Tracking" icon="clock">
+    Monitor employee check-ins and check-outs as they happen throughout the day
+  </Card>
+  <Card title="Attendance Reports" icon="chart-bar">
+    Generate comprehensive attendance reports with customizable date ranges
+  </Card>
+  <Card title="Leave Management" icon="calendar-days">
+    Track and manage employee leave requests, approvals, and balances
+  </Card>
+  <Card title="Remote Work Support" icon="house-laptop">
+    Distinguish between in-office and remote work attendance statuses
+  </Card>
+</CardGroup>
+
+## Dashboard Integration
+
+The dashboard displays today's attendance summary with key metrics:
+
+### Attendance Widget
+
+Visible on the main dashboard, the attendance widget shows:
+
+**Current Status Breakdown:**
+- **In Office / Remote**: Count of employees currently working (189 in example)
+- **Out / On Leave**: Count of employees absent or on approved leave (58 in example)
+
+**Visual Indicators:**
+- Green dot indicator for active employees
+- Gray dot indicator for absent employees
+- Progress bar showing percentage of workforce active
+- Calculated attendance rate
+
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:51-56
+const inOffice = 189
+const outLeave = 58
+const totalAttendance = inOffice + outLeave
+const attendancePercent = Math.round((inOffice / totalAttendance) * 100)
+```
+
+### Attendance Percentage
+
+The system automatically calculates the attendance percentage:
+
+```tsx
+// Visual progress bar implementation
+<div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden mb-3">
+  <div
+    className="h-full bg-green-500 rounded-full transition-all duration-1000"
+    style={{ width: `${attendancePercent}%` }}
+  ></div>
+</div>
+<p className="text-sm text-gray-500 font-medium">{attendancePercent}% workforce active today</p>
+```
+
+## Attendance Categories
+
+### In Office / Remote
+
+Employees marked as actively working, whether:
+- Physically present in office
+- Working from home/remotely
+- Checked in for the day
+- On active duty
+
+### Out / On Leave
+
+Employees who are:
+- On approved vacation
+- Taking sick leave
+- On personal time off
+- On sabbatical or extended leave
+- Absent without check-in
+
+## Planned Features
+
+<Card title="Coming Soon" icon="clock">
+  The full Attendance Tracking module is under development and will include additional features for comprehensive time and attendance management.
+</Card>
+
+### Time Tracking
+
+- **Clock In/Out**: Digital time clock for employees to log work hours
+- **Break Management**: Track lunch breaks and rest periods
+- **Overtime Tracking**: Automatically calculate overtime hours
+- **Timesheet Generation**: Create detailed timesheets for payroll processing
+
+### Leave Management
+
+- **Leave Requests**: Submit and approve time-off requests
+- **Leave Balances**: Track available PTO, sick days, and vacation time
+- **Leave Calendar**: Visualize team absences and plan coverage
+- **Approval Workflows**: Multi-level approval processes for leave requests
+
+### Attendance Reports
+
+- **Daily Reports**: View who's present each day
+- **Monthly Summaries**: Aggregate attendance data by month
+- **Trend Analysis**: Identify attendance patterns and issues
+- **Export Options**: Download reports in CSV, PDF formats
+
+### Geolocation & Verification
+
+- **GPS Check-In**: Verify employee location during clock-in
+- **Geofencing**: Set office boundaries for attendance validation
+- **IP Address Tracking**: Monitor check-ins from approved locations
+- **Photo Verification**: Optional photo capture during check-in
+
+## Integration Points
+
+### Dashboard Integration
+
+Attendance data is prominently displayed on the main dashboard:
+
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:172-201
+<div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+  <h3 className="text-base font-bold text-gray-900 mb-5 flex items-center gap-2">
+    <Clock className="w-4 h-4 text-gray-500" />
+    Today's Attendance
+  </h3>
+  <div className="space-y-4 mb-6">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+        <span className="text-sm font-medium text-gray-700">In Office / Remote</span>
+      </div>
+      <span className="font-bold text-gray-900">{inOffice}</span>
+    </div>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+        <span className="text-sm font-medium text-gray-700">Out / On Leave</span>
+      </div>
+      <span className="font-bold text-gray-900">{outLeave}</span>
+    </div>
+  </div>
+</div>
+```
+
+### Action Items Integration
+
+Attendance-related tasks appear in the dashboard's action items:
+
+```tsx
+const actionItems = [
+  { id: 1, title: 'Approve 3 leave requests', priority: 'high', done: false },
+  // ... other action items
+]
+```
+
+## Access Control
+
+The attendance module enforces authentication:
+
+```tsx
+// Source: ~/workspace/source/app/attendance/page.tsx:12-16
+useEffect(() => {
+  if (!auth.getToken()) {
+    router.push('/auth/login')
+  }
+}, [router])
+```
+
+## Best Practices
+
+<Tip>
+  **Daily Monitoring**: Review the attendance widget each morning to identify staffing levels and plan for coverage needs.
+</Tip>
+
+<Tip>
+  **Leave Request Approval**: Process leave requests promptly to maintain employee satisfaction and ensure adequate staffing.
+</Tip>
+
+<Tip>
+  **Attendance Patterns**: Use attendance data to identify trends such as frequent absences that may require intervention.
+</Tip>
+
+<Warning>
+  **Privacy Compliance**: Ensure attendance tracking practices comply with local labor laws and privacy regulations.
+</Warning>
+
+## User Interface
+
+The attendance module follows HCMatrix's design system:
+
+- Clean, modern interface with card-based layout
+- Responsive design for mobile and desktop
+- Consistent navigation with sidebar and header
+- Loading states for async data fetching
+- Error handling with user-friendly messages
+
+## Future Enhancements
+
+Planned improvements include:
+
+- **Biometric Integration**: Support for fingerprint and facial recognition
+- **Mobile App**: Native mobile apps for easy clock-in/out
+- **Shift Scheduling**: Create and manage employee shift schedules
+- **Attendance Policies**: Configure custom attendance rules and policies
+- **Notifications**: Automated alerts for late arrivals, absences, and approvals
+- **Integration**: Connect with payroll systems for automated time processing

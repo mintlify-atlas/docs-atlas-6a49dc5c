@@ -1,0 +1,327 @@
+---
+title: Managing Employees
+description: Complete guide to viewing, searching, and managing employee records in HCMatrix
+---
+
+## Overview
+
+The employee management module is the heart of HCMatrix. This guide covers how to view, search, filter, and navigate employee records efficiently.
+
+## Viewing Employees
+
+<Steps>
+  <Step title="Access Employee Directory">
+    Navigate to the Employees page from the sidebar. The system automatically fetches your employee list:
+
+    ```typescript
+    // From: ~/workspace/source/app/employees/page.tsx:25-30
+    const fetchEmployees = async (page: number = 1, query: string = '') => {
+      const token = auth.getToken()
+      if (!token) {
+        router.push('/auth/login')
+        return
+      }
+    ```
+  </Step>
+
+  <Step title="View Employee List">
+    Employees are displayed in a paginated table with key information:
+    - **Name & Email** - Employee identification
+    - **Job Title** - Current position
+    - **Department** - Organizational unit
+    - **Location** - Work location
+    - **Status** - Employment status (Active, Onboarding, On Leave, etc.)
+  </Step>
+
+  <Step title="Understand Status Badges">
+    Employee status is color-coded for quick identification:
+
+    ```typescript
+    // From: ~/workspace/source/app/employees/page.tsx:99-115
+    const statusMap: Record<string, { bg: string; text: string }> = {
+      active: { bg: 'bg-green-100', text: 'text-green-700' },
+      onboarding: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+      'on leave': { bg: 'bg-orange-100', text: 'text-orange-700' },
+      inactive: { bg: 'bg-gray-100', text: 'text-gray-700' },
+      terminated: { bg: 'bg-red-100', text: 'text-red-700' },
+    }
+    ```
+
+    - 🟢 **Green** - Active employees
+    - 🟡 **Yellow** - Onboarding in progress
+    - 🟠 **Orange** - On leave
+    - ⚪ **Gray** - Inactive
+    - 🔴 **Red** - Terminated
+  </Step>
+</Steps>
+
+## Searching Employees
+
+HCMatrix provides powerful search functionality with real-time results:
+
+<Steps>
+  <Step title="Use Search Bar">
+    Enter any search term in the search field at the top of the employee list. You can search by:
+    - Employee name
+    - Email address
+    - Job title
+  </Step>
+
+  <Step title="Debounced Search">
+    The search automatically triggers 500ms after you stop typing to reduce server load:
+
+    ```typescript
+    // From: ~/workspace/source/app/employees/page.tsx:69-81
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value
+      setSearchQuery(value)
+      setCurrentPage(1)
+
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current)
+      }
+
+      debounceTimer.current = setTimeout(() => {
+        fetchEmployees(1, value)
+      }, 500)
+    }
+    ```
+  </Step>
+
+  <Step title="API Search Request">
+    Search queries are sent to the API with the name parameter:
+
+    ```typescript
+    // From: ~/workspace/source/lib/api.ts:246-260
+    async searchEmployees(
+      token: string,
+      query: Record<string, string>,
+      page: number = 1
+    ): Promise<EmployeesResponse> {
+      const params = { ...query, page: page.toString() }
+      const queryString = new URLSearchParams(params).toString()
+      const response = await apiCall<any>(
+        `/api/v1/employee?${queryString}`,
+        'GET',
+        undefined,
+        token
+      )
+      return normalizeEmployeesResponse(response, page)
+    }
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Search is case-insensitive and supports partial matches. Type "john" to find "John Smith", "Johnny Doe", etc.
+</Tip>
+
+## Pagination
+
+Employee lists are paginated for performance:
+
+### Navigating Pages
+
+```typescript
+// From: ~/workspace/source/app/employees/page.tsx:83-97
+const handleNextPage = () => {
+  if (pagination?.hasNext) {
+    const next = currentPage + 1
+    setCurrentPage(next)
+    fetchEmployees(next, searchQuery)
+  }
+}
+
+const handlePrevPage = () => {
+  if (pagination?.hasPrev) {
+    const prev = currentPage - 1
+    setCurrentPage(prev)
+    fetchEmployees(prev, searchQuery)
+  }
+}
+```
+
+### Pagination Controls
+
+The bottom of the employee table shows:
+- Current page number
+- Total number of pages
+- Previous/Next navigation buttons
+- Buttons are automatically disabled when at first/last page
+
+## Fetching Employee Data
+
+### Get Paginated Employees
+
+```typescript
+// From: ~/workspace/source/lib/api.ts:214-230
+async getEmployees(
+  token: string,
+  page: number = 1,
+  params?: Record<string, string>
+): Promise<EmployeesResponse> {
+  const queryString = new URLSearchParams({
+    page: page.toString(),
+    ...params,
+  }).toString()
+  const response = await apiCall<any>(
+    `/api/v1/employee?${queryString}`,
+    'GET',
+    undefined,
+    token
+  )
+  return normalizeEmployeesResponse(response, page)
+}
+```
+
+### Get Single Employee Details
+
+```typescript
+// From: ~/workspace/source/lib/api.ts:233-243
+async getEmployee(token: string, id: number): Promise<EmployeeDetail> {
+  const response = await apiCall<any>(
+    `/api/v1/employee/${id}`,
+    'GET',
+    undefined,
+    token
+  )
+  const raw = response.data || response
+  return mapEmployeeDetail(raw)
+}
+```
+
+## Employee Data Structure
+
+### Basic Employee Interface
+
+```typescript
+// From: ~/workspace/source/lib/api.ts:26-38
+export interface Employee {
+  id: number
+  name: string
+  email: string
+  job_title: string
+  department: string
+  location: string
+  employment_type: string
+  status: string
+  start_date: string
+  avatar?: string
+  [key: string]: any
+}
+```
+
+### Detailed Employee Interface
+
+```typescript
+// From: ~/workspace/source/lib/api.ts:49-62
+export interface EmployeeDetail extends Employee {
+  phone: string
+  date_of_birth: string
+  address: string
+  salary: number
+  manager: string
+  manager_id: number
+  next_of_kin_name: string
+  next_of_kin_relationship: string
+  next_of_kin_phone: string
+  tenure_years: number
+  tenure_months: number
+  spouse: string | null
+}
+```
+
+## Viewing Employee Details
+
+Click on any employee name in the table to view their full profile:
+
+```tsx
+// From: ~/workspace/source/app/employees/page.tsx:199-202
+<Link href={`/employees/${employee.id}`} className="block">
+  <p className="font-bold text-blue-600 group-hover:text-blue-700 transition-colors">
+    {employee.name || 'N/A'}
+  </p>
+</Link>
+```
+
+The detail view shows:
+- Contact information (phone, email, address)
+- Employment details (job title, department, manager)
+- Compensation information
+- Emergency contact (next of kin)
+- Tenure information
+
+## Exporting Employee Data
+
+The "Export to CSV" button allows you to download employee data for external analysis:
+
+```tsx
+// From: ~/workspace/source/app/employees/page.tsx:151-154
+<Button variant="outline">
+  <Download className="w-4 h-4" />
+  Export to CSV
+</Button>
+```
+
+<Note>
+  Export functionality respects current search filters - only visible employees are exported.
+</Note>
+
+## Error Handling
+
+The system handles various error scenarios:
+
+```typescript
+// From: ~/workspace/source/app/employees/page.tsx:56-62
+catch (err) {
+  const errorMsg = err instanceof Error ? err.message : 'Failed to load employees'
+  setError(errorMsg)
+  setEmployees([])
+} finally {
+  setIsLoading(false)
+}
+```
+
+Errors are displayed prominently at the top of the page with clear messaging.
+
+## Loading States
+
+While fetching data, the system shows a loading spinner:
+
+```tsx
+// From: ~/workspace/source/app/employees/page.tsx:165-171
+{isLoading ? (
+  <div className="flex items-center justify-center p-20">
+    <div className="text-center">
+      <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+      <p className="mt-4 text-gray-500 font-medium">Loading employees...</p>
+    </div>
+  </div>
+) : ...}
+```
+
+## Empty States
+
+When no employees match your search, a helpful empty state is displayed:
+
+```tsx
+// From: ~/workspace/source/app/employees/page.tsx:172-181
+{employees.length === 0 ? (
+  <div className="flex items-center justify-center p-20">
+    <div className="text-center">
+      <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+        <Users className="w-8 h-8 text-gray-300" />
+      </div>
+      <p className="text-gray-900 font-bold mb-1">No employees found</p>
+      <p className="text-sm text-gray-500">Try adjusting your search criteria</p>
+    </div>
+  </div>
+) : ...}
+```
+
+## Next Steps
+
+- [Tracking Attendance](/guides/tracking-attendance) - Monitor employee time
+- [Processing Payroll](/guides/processing-payroll) - Manage compensation
+- [Recruiting Workflow](/guides/recruiting-workflow) - Hire new talent
+- [Generating Reports](/guides/generating-reports) - Analyze employee data

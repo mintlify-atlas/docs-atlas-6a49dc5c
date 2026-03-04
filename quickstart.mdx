@@ -1,80 +1,350 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get HCMatrix up and running in under 5 minutes
 ---
 
-## Get started in three steps
+# Quickstart Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will help you get HCMatrix running locally in under 5 minutes. You'll set up the development environment, configure the backend connection, and log in to the dashboard.
 
-### Step 1: Set up your local environment
+## Prerequisites
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+Before you begin, ensure you have:
+
+- **Node.js** 18.x or higher installed
+- **npm** or **yarn** package manager
+- A terminal/command line interface
+- A code editor (VS Code recommended)
+
+## Quick Setup
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone <repository-url>
+    cd hcmatrix
+    ```
+  </Step>
+  
+  <Step title="Install dependencies">
+    Install all required packages using npm:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    ```bash
+    npm install
+    ```
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    This will install all dependencies from `package.json:11`, including:
+    - Next.js 16.1.6
+    - React 19.2.4
+    - TypeScript 5.7.3
+    - Tailwind CSS 4.2.0
+    - Radix UI components
+    - Recharts for data visualization
+  </Step>
+  
+  <Step title="Configure environment">
+    Create a `.env.local` file in the root directory:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```bash
+    touch .env.local
+    ```
+    
+    Add your backend API URL:
+    
+    ```bash
+    NEXT_PUBLIC_API_URL=https://your-backend-api.com
+    ```
+    
+    <Note>
+      The API proxy is configured to route requests through `/api/proxy` to avoid CORS issues. See `lib/api.ts:2` for implementation details.
+    </Note>
+  </Step>
+  
+  <Step title="Start the development server">
+    Run the development server:
+    
+    ```bash
+    npm run dev
+    ```
+    
+    The application will start on `http://localhost:3000`
+    
+    <Info>
+      The dev server supports hot module replacement, so changes to your code will be reflected immediately in the browser.
+    </Info>
+  </Step>
+  
+  <Step title="Access the application">
+    Open your browser and navigate to:
+    
+    ```
+    http://localhost:3000
+    ```
+    
+    You'll be automatically redirected to the login page at `/auth/login`.
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Your First Login
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+The login page provides a clean, professional interface for authentication.
 
-### Step 3: Go live
+### Login Form
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+From `app/auth/login/page.tsx:19`, here's how the login process works:
 
-## Next steps
+```typescript
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setError('')
+  setIsLoading(true)
 
-Now that you have your docs running, explore these key features:
+  try {
+    const response = await api.login(email, password)
+    auth.saveSession({
+      token: response.token,
+      user: response.user,
+    })
+    router.push('/dashboard')
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Login failed')
+  } finally {
+    setIsLoading(false)
+  }
+}
+```
+
+### Login Interface
+
+<Steps>
+  <Step title="Enter your credentials">
+    - **Email**: Your organization email address
+    - **Password**: Your secure password
+  </Step>
+  
+  <Step title="Sign in">
+    Click the "Sign In" button. The system will:
+    1. Call the `/api/auth/login` endpoint
+    2. Receive a JWT token and user data
+    3. Store the session in localStorage (see `lib/auth.ts:13`)
+    4. Redirect you to the dashboard
+  </Step>
+</Steps>
+
+<Warning>
+  If you don't have credentials, contact your system administrator. The platform does not support self-registration - accounts must be created by administrators.
+</Warning>
+
+## Exploring the Dashboard
+
+Once logged in, you'll see the main dashboard with:
+
+### Key Metrics
+
+From `app/dashboard/page.tsx:12`, the dashboard displays:
+
+- **Total Employees**: Current workforce count with growth percentage
+- **New Hires This Month**: Recent onboarding activity
+- **Upcoming Events**: Birthdays, anniversaries, and important dates
+- **Open Positions**: Active job requisitions
+
+### API Integration Example
+
+```typescript
+useEffect(() => {
+  const token = auth.getToken()
+  if (!token) {
+    router.push('/auth/login')
+    return
+  }
+
+  const fetchDashboard = async () => {
+    try {
+      const data = await api.getDashboard(token)
+      setDashboardData(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  fetchDashboard()
+}, [router])
+```
+
+### Visual Analytics
+
+The dashboard includes:
+
+1. **Headcount Growth Chart**: 7-month trend visualization using Recharts
+2. **Department Distribution**: Pie chart showing workforce breakdown
+3. **Attendance Metrics**: Real-time presence tracking
+4. **Action Items**: Pending tasks requiring attention
+
+## Managing Employees
+
+Navigate to the Employees section to view your workforce.
+
+### Employee List
+
+From `app/employees/page.tsx:25`, the employee directory supports:
+
+```typescript
+const fetchEmployees = useCallback(async (page: number = 1, query: string = '') => {
+  const token = auth.getToken()
+  if (!token) {
+    router.push('/auth/login')
+    return
+  }
+
+  setIsLoading(true)
+  try {
+    let response: EmployeesResponse
+    if (query.trim()) {
+      response = await api.searchEmployees(token, { name: query.trim() }, page)
+    } else {
+      response = await api.getEmployees(token, page)
+    }
+    setEmployees(response.data)
+    setPagination({ /* pagination data */ })
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to load employees')
+  }
+}, [router])
+```
+
+### Features
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Search" icon="magnifying-glass">
+    Real-time search with 500ms debounce for optimal performance
+  </Card>
+  
+  <Card title="Pagination" icon="list">
+    Server-side pagination with customizable page size
+  </Card>
+  
+  <Card title="Status Badges" icon="tag">
+    Visual indicators for Active, Onboarding, On Leave, and other statuses
+  </Card>
+  
+  <Card title="Quick View" icon="eye">
+    Click any employee to view detailed profile information
+  </Card>
 </CardGroup>
 
+## Understanding the API Client
+
+HCMatrix uses a typed API client defined in `lib/api.ts`. Here are the main methods:
+
+### Authentication
+
+```typescript
+// Login
+await api.login(email: string, password: string): Promise<LoginResponse>
+
+// Logout
+await api.logout(token: string): Promise<void>
+```
+
+### Data Fetching
+
+```typescript
+// Get dashboard data
+await api.getDashboard(token: string): Promise<DashboardData>
+
+// Get paginated employees
+await api.getEmployees(token: string, page?: number): Promise<EmployeesResponse>
+
+// Get single employee
+await api.getEmployee(token: string, id: number): Promise<EmployeeDetail>
+
+// Search employees
+await api.searchEmployees(
+  token: string, 
+  query: Record<string, string>, 
+  page?: number
+): Promise<EmployeesResponse>
+```
+
+## TypeScript Interfaces
+
+All API responses are fully typed. From `lib/api.ts:19`:
+
+```typescript
+export interface DashboardData {
+  total_employees: number
+  new_hire_count: number
+  upcoming_event: number
+  open_positions: number
+}
+
+export interface Employee {
+  id: number
+  name: string
+  email: string
+  job_title: string
+  department: string
+  location: string
+  employment_type: string
+  status: string
+  start_date: string
+  avatar?: string
+}
+
+export interface EmployeeDetail extends Employee {
+  phone: string
+  date_of_birth: string
+  address: string
+  salary: number
+  manager: string
+  manager_id: number
+  next_of_kin_name: string
+  next_of_kin_relationship: string
+  next_of_kin_phone: string
+  tenure_years: number
+  tenure_months: number
+  spouse: string | null
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Full Installation Guide" icon="book" href="/installation">
+    Learn about production deployment, environment variables, and advanced configuration
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore all available API endpoints and their usage
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Login fails with 'API error'">
+    - Verify your backend API URL in `.env.local`
+    - Check that the backend service is running
+    - Ensure CORS is properly configured on the backend
+    - Check the browser console for detailed error messages
+  </Accordion>
+  
+  <Accordion title="Dashboard shows no data">
+    - Verify your authentication token is valid
+    - Check network requests in browser DevTools
+    - Ensure the backend API endpoints are accessible
+    - Clear localStorage and login again
+  </Accordion>
+  
+  <Accordion title="Build errors during npm install">
+    - Ensure Node.js version is 18.x or higher
+    - Delete `node_modules` and `package-lock.json`, then run `npm install` again
+    - Check for conflicting global packages
+  </Accordion>
+</AccordionGroup>
+
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  If you encounter issues not covered here, check the browser console and terminal output for detailed error messages.
 </Note>

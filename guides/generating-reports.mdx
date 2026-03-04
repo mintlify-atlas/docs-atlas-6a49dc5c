@@ -1,0 +1,450 @@
+---
+title: Generating Reports
+description: Learn how to create, customize, and export reports in HCMatrix
+---
+
+## Overview
+
+The Reports module in HCMatrix provides powerful analytics and reporting capabilities across all HR functions. Generate insights on employees, attendance, payroll, recruitment, and organizational metrics.
+
+## Accessing Reports
+
+<Steps>
+  <Step title="Navigate to Reports Module">
+    Access the Reports section from the main navigation sidebar. Authentication is verified:
+
+    ```typescript
+    // From: ~/workspace/source/app/reports/page.tsx:12-16
+    useEffect(() => {
+      if (!auth.getToken()) {
+        router.push('/auth/login')
+      }
+    }, [router])
+    ```
+  </Step>
+
+  <Step title="Authentication Check">
+    Only authenticated users with valid tokens can generate reports. Unauthorized access redirects to the login page.
+  </Step>
+</Steps>
+
+## Current Implementation
+
+The reports module follows the HCMatrix layout standards:
+
+```tsx
+// From: ~/workspace/source/app/reports/page.tsx:18-31
+return (
+  <div className="min-h-screen bg-gray-50">
+    <Sidebar />
+    <div className="ml-64 flex flex-col min-h-screen">
+      <Header title="Reports" />
+      <main className="flex-1 p-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <p className="text-gray-600">Reports module coming soon...</p>
+        </div>
+      </main>
+    </div>
+  </div>
+)
+```
+
+<Note>
+  The Reports module is currently under development. Advanced analytics, custom report builders, and scheduled reporting features are being implemented.
+</Note>
+
+## Dashboard Analytics
+
+HCMatrix already provides key metrics through the dashboard:
+
+```typescript
+// From: ~/workspace/source/lib/api.ts:19-24
+export interface DashboardData {
+  total_employees: number      // Total workforce count
+  new_hire_count: number       // Recent new hires
+  upcoming_event: number       // Scheduled events
+  open_positions: number       // Active job openings
+}
+```
+
+### Fetching Dashboard Metrics
+
+```typescript
+// From: ~/workspace/source/lib/api.ts:201-211
+async getDashboard(token: string): Promise<DashboardData> {
+  const response = await apiCall<any>('/api/v1/dashboard', 'GET', undefined, token)
+  const data = response.data || response
+  return {
+    total_employees: data.total_employees ?? 0,
+    new_hire_count: data.new_hire_count ?? 0,
+    upcoming_event: data.upcoming_event ?? 0,
+    open_positions: data.open_positions ?? 0,
+  }
+}
+```
+
+## Planned Report Categories
+
+The upcoming Reports module will include:
+
+### Employee Reports
+- Employee directory and demographics
+- Headcount by department/location
+- Tenure analysis
+- Turnover and retention rates
+- Diversity and inclusion metrics
+- Organization charts
+
+### Attendance Reports
+- Daily/weekly/monthly attendance summaries
+- Late arrival and absenteeism tracking
+- Time-off balances and usage
+- Overtime analysis
+- Department attendance trends
+- Individual time cards
+
+### Payroll Reports
+- Payroll summary by period
+- Compensation analysis
+- Tax liability reports
+- Benefits deductions
+- Year-end reporting (W-2, 1099)
+- Cost center analysis
+
+### Recruitment Reports
+- Time-to-hire metrics
+- Source effectiveness
+- Candidate pipeline status
+- Interview-to-hire ratios
+- Offer acceptance rates
+- Recruiting costs per hire
+
+### Compliance Reports
+- EEO-1 reporting
+- FLSA compliance
+- I-9 verification status
+- Required training completion
+- Benefits enrollment
+- Safety incident reports
+
+## Export Functionality
+
+HCMatrix supports exporting data in multiple formats:
+
+### CSV Export
+
+The employee list already includes CSV export capability:
+
+```tsx
+// From: ~/workspace/source/app/employees/page.tsx:151-154
+<Button variant="outline">
+  <Download className="w-4 h-4" />
+  Export to CSV
+</Button>
+```
+
+This pattern will extend to all report types:
+- **CSV** - For spreadsheet analysis
+- **PDF** - For printing and sharing
+- **Excel** - For advanced data manipulation
+- **JSON** - For API integrations
+
+## Planned API Structure
+
+The reports API will provide flexible data access:
+
+```typescript
+// Example future API endpoints
+export const api = {
+  // Generate standard report
+  async generateReport(
+    token: string,
+    reportType: string,
+    params: ReportParams
+  ): Promise<ReportData> {
+    return apiCall<ReportData>(
+      '/api/v1/reports/generate',
+      'POST',
+      { report_type: reportType, ...params },
+      token
+    )
+  },
+
+  // Get saved reports
+  async getSavedReports(
+    token: string,
+    page: number = 1
+  ): Promise<SavedReportsResponse> {
+    const queryString = new URLSearchParams({ page: page.toString() }).toString()
+    return apiCall<SavedReportsResponse>(
+      `/api/v1/reports/saved?${queryString}`,
+      'GET',
+      undefined,
+      token
+    )
+  },
+
+  // Export report
+  async exportReport(
+    token: string,
+    reportId: number,
+    format: 'csv' | 'pdf' | 'xlsx'
+  ): Promise<Blob> {
+    return apiCall<Blob>(
+      `/api/v1/reports/${reportId}/export?format=${format}`,
+      'GET',
+      undefined,
+      token
+    )
+  },
+
+  // Schedule automated report
+  async scheduleReport(
+    token: string,
+    reportConfig: ScheduledReport
+  ): Promise<ScheduledReport> {
+    return apiCall<ScheduledReport>(
+      '/api/v1/reports/schedule',
+      'POST',
+      reportConfig,
+      token
+    )
+  },
+
+  // Get employee metrics
+  async getEmployeeMetrics(
+    token: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<EmployeeMetrics> {
+    const params: any = {}
+    if (startDate) params.start_date = startDate
+    if (endDate) params.end_date = endDate
+    const queryString = new URLSearchParams(params).toString()
+    return apiCall<EmployeeMetrics>(
+      `/api/v1/reports/metrics/employees?${queryString}`,
+      'GET',
+      undefined,
+      token
+    )
+  },
+
+  // Get payroll analytics
+  async getPayrollAnalytics(
+    token: string,
+    year: number,
+    quarter?: number
+  ): Promise<PayrollAnalytics> {
+    const params: any = { year }
+    if (quarter) params.quarter = quarter
+    const queryString = new URLSearchParams(params).toString()
+    return apiCall<PayrollAnalytics>(
+      `/api/v1/reports/analytics/payroll?${queryString}`,
+      'GET',
+      undefined,
+      token
+    )
+  }
+}
+```
+
+## Data Structures
+
+Planned reporting data interfaces:
+
+```typescript
+export interface ReportParams {
+  start_date?: string
+  end_date?: string
+  department_id?: number
+  location?: string
+  employee_ids?: number[]
+  group_by?: string
+  filters?: Record<string, any>
+}
+
+export interface ReportData {
+  id: number
+  report_type: string
+  title: string
+  generated_at: string
+  generated_by: number
+  parameters: ReportParams
+  data: any[]
+  summary: Record<string, any>
+  chart_data?: ChartData[]
+}
+
+export interface SavedReport {
+  id: number
+  name: string
+  description?: string
+  report_type: string
+  parameters: ReportParams
+  created_at: string
+  created_by: number
+  last_run?: string
+}
+
+export interface SavedReportsResponse {
+  data: SavedReport[]
+  current_page: number
+  per_page: number
+  total: number
+}
+
+export interface ScheduledReport {
+  id: number
+  report_id: number
+  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly'
+  day_of_week?: number
+  day_of_month?: number
+  time: string
+  recipients: string[]  // Email addresses
+  format: 'csv' | 'pdf' | 'xlsx'
+  active: boolean
+  next_run: string
+}
+
+export interface EmployeeMetrics {
+  total_employees: number
+  active_employees: number
+  new_hires: number
+  terminations: number
+  turnover_rate: number
+  average_tenure_months: number
+  by_department: DepartmentMetric[]
+  by_location: LocationMetric[]
+  by_employment_type: EmploymentTypeMetric[]
+}
+
+export interface DepartmentMetric {
+  department: string
+  employee_count: number
+  average_salary: number
+  turnover_rate: number
+}
+
+export interface PayrollAnalytics {
+  total_gross_pay: number
+  total_deductions: number
+  total_net_pay: number
+  average_salary: number
+  highest_paid_department: string
+  payroll_trend: PayrollTrend[]
+  cost_by_department: CostByDepartment[]
+}
+
+export interface ChartData {
+  label: string
+  value: number
+  color?: string
+}
+```
+
+## Report Building Workflow
+
+<Steps>
+  <Step title="Select Report Type">
+    Choose from pre-built report templates or create a custom report.
+  </Step>
+
+  <Step title="Configure Parameters">
+    Set date ranges, filters, and grouping options:
+    - Date range (start and end dates)
+    - Department or location filters
+    - Employee selection criteria
+    - Grouping and aggregation preferences
+  </Step>
+
+  <Step title="Preview Report">
+    Review the report data and visualizations before finalizing.
+  </Step>
+
+  <Step title="Save or Export">
+    Save the report configuration for future use or export immediately:
+    - Export to CSV/PDF/Excel
+    - Save as a template
+    - Schedule for automatic generation
+  </Step>
+</Steps>
+
+## Scheduled Reports
+
+Automate report generation and distribution:
+
+### Setting Up Scheduled Reports
+
+1. **Choose Report**: Select the report type and configuration
+2. **Set Frequency**: Daily, weekly, monthly, or quarterly
+3. **Define Recipients**: Add email addresses for automatic delivery
+4. **Select Format**: Choose CSV, PDF, or Excel
+5. **Activate**: Enable the schedule to start automatic generation
+
+<Tip>
+  Schedule critical reports like payroll summaries and attendance to run automatically before review meetings.
+</Tip>
+
+## Data Filtering and Segmentation
+
+Reports support advanced filtering:
+
+- **Date Ranges**: Custom or preset periods (MTD, QTD, YTD)
+- **Departments**: Filter by specific organizational units
+- **Locations**: Focus on particular offices or regions
+- **Employment Status**: Active, inactive, or specific statuses
+- **Employment Type**: Full-time, part-time, contractors
+- **Custom Fields**: Any employee attribute
+
+## Visualizations
+
+Reports include visual representations:
+
+- **Bar Charts**: Compare metrics across categories
+- **Pie Charts**: Show distribution percentages
+- **Line Graphs**: Display trends over time
+- **Tables**: Detailed data views with sorting
+- **Heat Maps**: Visualize patterns and outliers
+
+## Security and Access Control
+
+<Warning>
+  Reports may contain sensitive employee data. Access should be restricted based on roles:
+  - **HR Admins**: Full access to all reports
+  - **Managers**: Access to their department reports only
+  - **Employees**: Limited to personal reports
+</Warning>
+
+## Best Practices
+
+### For HR Administrators
+- Schedule regular compliance reports
+- Archive historical reports for audits
+- Share aggregated data, not individual records
+- Validate report accuracy before distribution
+- Document report definitions and formulas
+
+### For Managers
+- Review department metrics monthly
+- Monitor attendance and overtime trends
+- Use reports to identify training needs
+- Compare team performance over time
+- Export data for budget planning
+
+### For Executives
+- Track high-level workforce metrics
+- Monitor headcount and costs
+- Analyze turnover and retention trends
+- Review diversity and inclusion progress
+- Use data for strategic planning
+
+<Tip>
+  Create a reporting calendar to ensure critical metrics are reviewed consistently throughout the year.
+</Tip>
+
+## Next Steps
+
+- [Managing Employees](/guides/managing-employees) - View employee data sources
+- [Tracking Attendance](/guides/tracking-attendance) - Understand attendance metrics
+- [Processing Payroll](/guides/processing-payroll) - Review payroll reporting
+- [Recruiting Workflow](/guides/recruiting-workflow) - Analyze hiring metrics

@@ -1,0 +1,371 @@
+---
+title: 'Employees List'
+description: 'Fetch and search employee lists with pagination'
+---
+
+## Get Employees
+
+Retrieve a paginated list of employees.
+
+### Method
+
+```typescript
+api.getEmployees(
+  token: string,
+  page?: number,
+  params?: Record<string, string>
+): Promise<EmployeesResponse>
+```
+
+### Endpoint
+
+```
+GET /api/v1/employee?page={page}&{params}
+```
+
+### Parameters
+
+<ParamField path="token" type="string" required>
+  Authentication token obtained from login
+</ParamField>
+
+<ParamField path="page" type="number" default="1">
+  Page number for pagination (1-indexed)
+</ParamField>
+
+<ParamField path="params" type="Record<string, string>">
+  Additional query parameters to filter results
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="Employee[]" required>
+  Array of employee objects. See [Employee model](/api/models/employee#employee) for details.
+</ResponseField>
+
+<ResponseField name="current_page" type="number" required>
+  Current page number
+</ResponseField>
+
+<ResponseField name="per_page" type="number" required>
+  Number of items per page (default: 15)
+</ResponseField>
+
+<ResponseField name="total" type="number" required>
+  Total number of employees
+</ResponseField>
+
+<ResponseField name="next_page_url" type="string | null" required>
+  URL for the next page, or null if on last page
+</ResponseField>
+
+<ResponseField name="prev_page_url" type="string | null" required>
+  URL for the previous page, or null if on first page
+</ResponseField>
+
+### Response Interface
+
+```typescript
+interface EmployeesResponse {
+  data: Employee[]
+  current_page: number
+  per_page: number
+  total: number
+  next_page_url: string | null
+  prev_page_url: string | null
+}
+```
+
+### Example Request
+
+```typescript
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+
+const token = auth.getToken()
+
+if (token) {
+  // Get first page
+  const page1 = await api.getEmployees(token, 1)
+  console.log(`Total: ${page1.total} employees`)
+  console.log(`Page 1 of ${Math.ceil(page1.total / page1.per_page)}`)
+  
+  // Get second page
+  const page2 = await api.getEmployees(token, 2)
+  
+  // With additional parameters
+  const filtered = await api.getEmployees(token, 1, {
+    department: 'Engineering',
+    status: 'active'
+  })
+}
+```
+
+### Example Response
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "job_title": "Software Engineer",
+      "department": "Engineering",
+      "location": "New York",
+      "employment_type": "Full-time",
+      "status": "active",
+      "start_date": "2023-01-15",
+      "avatar": "https://example.com/avatar.jpg"
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "email": "jane.smith@example.com",
+      "job_title": "Product Manager",
+      "department": "Product",
+      "location": "San Francisco",
+      "employment_type": "Full-time",
+      "status": "active",
+      "start_date": "2022-08-01"
+    }
+  ],
+  "current_page": 1,
+  "per_page": 15,
+  "total": 150,
+  "next_page_url": "/api/v1/employee?page=2",
+  "prev_page_url": null
+}
+```
+
+## Search Employees
+
+Search for employees with specific criteria.
+
+### Method
+
+```typescript
+api.searchEmployees(
+  token: string,
+  query: Record<string, string>,
+  page?: number
+): Promise<EmployeesResponse>
+```
+
+### Endpoint
+
+```
+GET /api/v1/employee?{query}&page={page}
+```
+
+### Parameters
+
+<ParamField path="token" type="string" required>
+  Authentication token obtained from login
+</ParamField>
+
+<ParamField path="query" type="Record<string, string>" required>
+  Search query parameters (e.g., name, email, department, job_title)
+</ParamField>
+
+<ParamField path="page" type="number" default="1">
+  Page number for pagination (1-indexed)
+</ParamField>
+
+### Response
+
+Returns an `EmployeesResponse` object with the same structure as `getEmployees`.
+
+### Example Request
+
+```typescript
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+
+const token = auth.getToken()
+
+if (token) {
+  // Search by name
+  const results = await api.searchEmployees(token, {
+    name: 'John'
+  })
+  
+  // Search by department and status
+  const engineers = await api.searchEmployees(token, {
+    department: 'Engineering',
+    status: 'active'
+  }, 1)
+  
+  // Search by location
+  const nyEmployees = await api.searchEmployees(token, {
+    location: 'New York'
+  })
+  
+  console.log(`Found ${results.total} employees matching "John"`)
+}
+```
+
+### Common Search Parameters
+
+- `name` - Employee name (partial match)
+- `email` - Email address
+- `department` - Department name
+- `job_title` - Job title
+- `location` - Office location
+- `status` - Employment status (e.g., active, inactive)
+- `employment_type` - Employment type (e.g., Full-time, Part-time)
+
+## Data Mapping
+
+The API automatically maps raw API responses to standardized Employee objects:
+
+```typescript
+function mapEmployee(raw: any): Employee {
+  return {
+    ...raw,
+    name: raw.full_name || raw.name || '',
+    email: raw.email || '',
+    job_title: raw.job_title || '',
+    department: raw.department || '',
+    location: raw.location || '',
+    employment_type: raw.employment_type || raw.emp_type || '',
+    status: raw.status || '',
+    start_date: raw.start_date || '',
+    avatar: raw.image_url || raw.avatar || '',
+  }
+}
+```
+
+This handles variations in API field names (e.g., `full_name` vs `name`, `image_url` vs `avatar`).
+
+## Response Normalization
+
+The API handles different response formats:
+
+```typescript
+// Format 1: Wrapped response
+{
+  "success": true,
+  "data": {
+    "current_page": 1,
+    "data": [...],
+    "total": 150
+  }
+}
+
+// Format 2: Direct pagination object
+{
+  "current_page": 1,
+  "data": [...],
+  "total": 150
+}
+
+// Format 3: Direct array
+[...]
+```
+
+All formats are normalized to the standard `EmployeesResponse` interface.
+
+## Pagination Example
+
+```typescript
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+import type { EmployeesResponse } from '@/lib/api'
+
+async function loadAllEmployees() {
+  const token = auth.getToken()
+  if (!token) return []
+  
+  const allEmployees = []
+  let currentPage = 1
+  let hasMore = true
+  
+  while (hasMore) {
+    const response: EmployeesResponse = await api.getEmployees(token, currentPage)
+    allEmployees.push(...response.data)
+    
+    hasMore = response.next_page_url !== null
+    currentPage++
+  }
+  
+  return allEmployees
+}
+
+// Usage
+const employees = await loadAllEmployees()
+console.log(`Loaded ${employees.length} total employees`)
+```
+
+## React Component Example
+
+```typescript
+import { useState, useEffect } from 'react'
+import { api } from '@/lib/api'
+import { auth } from '@/lib/auth'
+import type { EmployeesResponse } from '@/lib/api'
+
+export default function EmployeeList() {
+  const [employees, setEmployees] = useState<EmployeesResponse | null>(null)
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(false)
+  
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const token = auth.getToken()
+      if (!token) return
+      
+      setLoading(true)
+      try {
+        const data = await api.getEmployees(token, page)
+        setEmployees(data)
+      } catch (error) {
+        console.error('Error:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchEmployees()
+  }, [page])
+  
+  if (loading) return <div>Loading...</div>
+  if (!employees) return <div>No data</div>
+  
+  return (
+    <div>
+      <div>
+        {employees.data.map(emp => (
+          <div key={emp.id}>
+            <h3>{emp.name}</h3>
+            <p>{emp.job_title} - {emp.department}</p>
+          </div>
+        ))}
+      </div>
+      
+      <div>
+        <button 
+          disabled={!employees.prev_page_url}
+          onClick={() => setPage(p => p - 1)}
+        >
+          Previous
+        </button>
+        
+        <span>Page {employees.current_page}</span>
+        
+        <button 
+          disabled={!employees.next_page_url}
+          onClick={() => setPage(p => p + 1)}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+## Related
+
+- [Employee Model](/api/models/employee#employee) - Employee interface documentation
+- [Employee Details](/api/employee-details) - Get detailed employee information

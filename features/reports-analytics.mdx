@@ -1,0 +1,455 @@
+---
+title: "Reports & Analytics"
+description: "Generate comprehensive HR reports and gain data-driven insights into your workforce with powerful analytics tools"
+---
+
+## Overview
+
+The Reports & Analytics module in HCMatrix transforms your HR data into actionable insights. From workforce trends to compliance reporting, this feature provides the analytics you need to make informed decisions about your organization.
+
+<Note>
+  The Reports & Analytics module is currently under development. The dashboard provides preview analytics with visualizations for headcount growth and department distribution.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Visual Analytics" icon="chart-line">
+    Interactive charts and graphs showing workforce trends and key metrics
+  </Card>
+  <Card title="Custom Reports" icon="file-chart-column">
+    Build and schedule custom reports tailored to your specific needs
+  </Card>
+  <Card title="Data Export" icon="download">
+    Export data in multiple formats including CSV, Excel, and PDF
+  </Card>
+  <Card title="Compliance Reporting" icon="shield-check">
+    Generate regulatory compliance reports for EEOC, OSHA, and other requirements
+  </Card>
+</CardGroup>
+
+## Dashboard Analytics
+
+The dashboard showcases two primary analytics visualizations:
+
+### Headcount Growth Chart
+
+Track organizational growth over time with an interactive line chart:
+
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:58-66
+const headcountData = [
+  { month: 'Aug', value: 195 },
+  { month: 'Sep', value: 210 },
+  { month: 'Oct', value: 215 },
+  { month: 'Nov', value: 225 },
+  { month: 'Dec', value: 230 },
+  { month: 'Jan', value: 240 },
+  { month: 'Feb', value: dashboardData?.total_employees || 247 },
+]
+```
+
+**Chart Implementation:**
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:237-270
+<div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+  <h3 className="text-base font-bold text-gray-900 mb-1">Headcount Growth</h3>
+  <p className="text-sm text-gray-500 mb-6">Last 7 months</p>
+  <div className="h-[280px] w-full">
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={headcountData}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+        <XAxis
+          dataKey="month"
+          tick={{ fontSize: 12, fill: '#9ca3af' }}
+          axisLine={false}
+          tickLine={false}
+        />
+        <YAxis
+          tick={{ fontSize: 12, fill: '#9ca3af' }}
+          axisLine={false}
+          tickLine={false}
+        />
+        <Tooltip
+          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+        />
+        <Line
+          type="monotone"
+          dataKey="value"
+          stroke="#3b82f6"
+          strokeWidth={3}
+          dot={{ fill: '#3b82f6', r: 4, strokeWidth: 2, stroke: '#fff' }}
+          activeDot={{ r: 6, strokeWidth: 0 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+</div>
+```
+
+**Features:**
+- 7-month historical trend
+- Smooth line interpolation
+- Interactive data points with tooltips
+- Clean, minimal design
+- Responsive sizing
+- Real-time data integration
+
+### Department Distribution Chart
+
+Visualize workforce allocation across departments with a donut chart:
+
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:69-77
+const departmentData = [
+  { name: 'Engineering', value: 85, fill: '#3b82f6' },
+  { name: 'Sales', value: 52, fill: '#10b981' },
+  { name: 'Marketing', value: 38, fill: '#f59e0b' },
+  { name: 'HR', value: 15, fill: '#8b5cf6' },
+  { name: 'Product', value: 28, fill: '#ec4899' },
+  { name: 'Finance', value: 12, fill: '#06b6d4' },
+  { name: 'Other', value: 17, fill: '#6b7280' },
+]
+```
+
+**Chart Implementation:**
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:273-307
+<div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+  <h3 className="text-base font-bold text-gray-900 mb-1">Department Distribution</h3>
+  <p className="text-sm text-gray-500 mb-6">Current workforce breakdown</p>
+  <div className="h-[280px] w-full">
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={departmentData}
+          cx="50%"
+          cy="50%"
+          innerRadius={60}
+          outerRadius={90}
+          paddingAngle={5}
+          dataKey="value"
+        >
+          {departmentData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.fill} />
+          ))}
+        </Pie>
+        <Tooltip
+          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
+  <div className="flex flex-wrap justify-center gap-4 mt-2">
+    {departmentData.slice(0, 4).map((dept) => (
+      <div key={dept.name} className="flex items-center gap-1.5">
+        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dept.fill }}></div>
+        <span className="text-xs font-medium text-gray-600">{dept.name}</span>
+      </div>
+    ))}
+  </div>
+</div>
+```
+
+**Features:**
+- Donut chart visualization
+- Color-coded departments
+- Interactive tooltips
+- Legend showing top 4 departments
+- Segment spacing for clarity
+- Current workforce snapshot
+
+## Chart Library
+
+HCMatrix uses Recharts for data visualization:
+
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:10
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+```
+
+**Why Recharts:**
+- Built on React components
+- Responsive and mobile-friendly
+- Customizable styling
+- Interactive features
+- Performant rendering
+- Wide chart type support
+
+## Planned Reports
+
+<Card title="Comprehensive Reporting Suite" icon="chart-mixed">
+  A full-featured reporting module is in development with customizable reports, scheduled delivery, and advanced analytics.
+</Card>
+
+### Workforce Reports
+
+**Headcount Reports:**
+- Current headcount by department
+- Headcount trends over time
+- New hires and terminations
+- Turnover rate analysis
+- Retention metrics
+- Cost per employee
+
+**Demographics Reports:**
+- Age distribution
+- Gender breakdown
+- Diversity metrics (EEO-1)
+- Location distribution
+- Employment type breakdown
+- Tenure analysis
+
+**Organization Structure:**
+- Organizational chart
+- Span of control analysis
+- Department hierarchies
+- Manager-to-employee ratios
+- Vacant positions
+
+### Attendance & Time Reports
+
+**Attendance Analytics:**
+- Daily/weekly/monthly attendance rates
+- Absence trends
+- Late arrivals and early departures
+- Remote vs. in-office breakdown
+- Overtime hours tracking
+- PTO utilization
+
+**Leave Reports:**
+- Leave balance summary
+- Leave taken by type
+- Pending leave requests
+- Leave trends by department
+- Unplanned absence patterns
+
+### Compensation Reports
+
+**Payroll Analytics:**
+- Total payroll costs
+- Average salary by department
+- Salary range analysis
+- Pay equity reports
+- Bonus and commission tracking
+- Benefits costs
+
+**Compensation Planning:**
+- Salary budget forecasting
+- Merit increase planning
+- Compa-ratio analysis
+- Market comparison data
+- Total compensation statements
+
+### Recruitment Reports
+
+**Hiring Metrics:**
+- Time-to-hire by position
+- Source of hire effectiveness
+- Applicant funnel conversion
+- Offer acceptance rates
+- Cost-per-hire
+- Recruiter productivity
+
+**Pipeline Analytics:**
+- Open positions by status
+- Candidates by stage
+- Interview-to-hire ratio
+- Hiring velocity
+- Diversity in hiring pipeline
+
+### Performance & Development
+
+**Performance Analytics:**
+- Performance rating distribution
+- Goals completion rates
+- Review completion tracking
+- High/low performer identification
+- Performance improvement plans
+
+**Training & Development:**
+- Training completion rates
+- Skills inventory
+- Certification tracking
+- Learning hours by employee
+- Training ROI analysis
+
+### Compliance Reports
+
+**Regulatory Compliance:**
+- EEO-1 reporting
+- VETS-4212 reporting
+- OSHA compliance
+- ACA (Affordable Care Act) reporting
+- I-9 verification status
+- Workers' compensation claims
+
+**Audit Reports:**
+- Policy acknowledgment tracking
+- Background check status
+- License and certification expiration
+- Document retention compliance
+- Data access logs
+
+## Custom Report Builder
+
+### Report Configuration
+
+**Data Selection:**
+- Choose data sources (employees, attendance, payroll, etc.)
+- Select fields to include
+- Apply filters and criteria
+- Set date ranges
+- Group by dimensions
+
+**Visualization Options:**
+- Tables with sortable columns
+- Bar charts for comparisons
+- Line charts for trends
+- Pie/donut charts for distribution
+- Heat maps for patterns
+- Gauges for KPIs
+
+**Formatting:**
+- Custom column headers
+- Number formatting (currency, percentage, etc.)
+- Date format preferences
+- Color schemes and themes
+- Logo and branding
+
+### Report Scheduling
+
+**Automated Delivery:**
+- Schedule frequency (daily, weekly, monthly)
+- Specific delivery time
+- Recipient email list
+- File format (PDF, Excel, CSV)
+- Automatic archival
+
+**Report Snapshots:**
+- Save report configurations
+- Version control
+- Historical comparisons
+- Baseline tracking
+
+## Data Export
+
+Export capabilities across all modules:
+
+**Export Formats:**
+- CSV for Excel import
+- XLSX (native Excel format)
+- PDF for sharing and printing
+- JSON for API integration
+
+**Export Features:**
+- Filtered data export
+- Custom column selection
+- Bulk export capabilities
+- Scheduled exports
+
+## Key Performance Indicators (KPIs)
+
+### Dashboard KPIs
+
+The dashboard displays critical HR metrics:
+
+```tsx
+// Source: ~/workspace/source/app/dashboard/page.tsx:114-128
+<div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+  <div className="flex items-start justify-between">
+    <div>
+      <p className="text-gray-500 text-xs sm:text-sm font-medium">Total Employees</p>
+      <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{dashboardData?.total_employees ?? 0}</p>
+      <p className="text-green-600 text-xs sm:text-sm mt-2 flex items-center gap-1">
+        <TrendingUp className="w-3.5 h-3.5" />
+        +12% from last month
+      </p>
+    </div>
+    <div className="p-2 sm:p-2.5 bg-blue-50 rounded-xl">
+      <Users className="w-5 h-5 text-blue-600" />
+    </div>
+  </div>
+</div>
+```
+
+**Tracked KPIs:**
+- Total employees with growth trend
+- New hires this month
+- Upcoming events count
+- Open positions
+- Attendance rate
+- Action items pending
+
+## Access Control
+
+The reports module enforces authentication:
+
+```tsx
+// Source: ~/workspace/source/app/reports/page.tsx:12-16
+useEffect(() => {
+  if (!auth.getToken()) {
+    router.push('/auth/login')
+  }
+}, [router])
+```
+
+## Best Practices
+
+<Tip>
+  **Regular Review**: Schedule weekly or monthly reviews of key metrics to spot trends early and make proactive decisions.
+</Tip>
+
+<Tip>
+  **Data Accuracy**: Ensure employee data is up-to-date and accurate before generating reports. Garbage in, garbage out.
+</Tip>
+
+<Tip>
+  **Benchmark Tracking**: Compare your metrics against industry benchmarks to identify areas for improvement.
+</Tip>
+
+<Tip>
+  **Visual Storytelling**: Use charts and graphs to make data more digestible and compelling for stakeholders.
+</Tip>
+
+<Warning>
+  **Data Privacy**: Reports often contain sensitive employee information. Implement role-based access controls and audit logging.
+</Warning>
+
+## Performance Optimization
+
+**Efficient Data Loading:**
+- Paginated results for large datasets
+- Lazy loading for charts
+- Data caching for frequently accessed reports
+- Background processing for complex reports
+
+**Responsive Design:**
+- Charts adapt to screen size
+- Mobile-optimized table scrolling
+- Touch-friendly controls
+- Print-friendly layouts
+
+## User Interface
+
+The reports module will feature:
+
+- Drag-and-drop report builder
+- Real-time chart preview
+- Filter sidebar with search
+- Export button with format options
+- Save and favorite reports
+- Share reports via link
+- Embedding for dashboards
+
+## Future Enhancements
+
+Planned improvements include:
+
+- **AI-Powered Insights**: Automated anomaly detection and trend predictions
+- **Natural Language Queries**: Ask questions in plain English
+- **Real-Time Dashboards**: Live-updating executive dashboards
+- **Predictive Analytics**: Forecast turnover, hiring needs, and costs
+- **Mobile App**: Native iOS and Android analytics apps
+- **API Access**: REST API for custom integrations
+- **Embedded Analytics**: White-label reporting for clients

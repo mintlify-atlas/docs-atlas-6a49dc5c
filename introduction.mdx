@@ -1,0 +1,185 @@
+---
+title: Introduction
+description: Welcome to HCMatrix - A modern HR management platform built with Next.js, React, and TypeScript
+---
+
+# Introduction to HCMatrix
+
+HCMatrix is a comprehensive SaaS HR management platform designed to streamline workforce operations for modern organizations. Built with cutting-edge technologies, it provides powerful tools for managing employees, tracking attendance, handling recruitment, and generating insightful reports.
+
+## What is HCMatrix?
+
+HCMatrix is a full-featured HR management system that helps organizations:
+
+- **Manage Employee Data**: Centralize all employee information with searchable, paginated employee directories
+- **Track Workforce Metrics**: Monitor headcount, new hires, attendance, and department distribution in real-time
+- **Streamline Recruitment**: Manage open positions and track candidates throughout the hiring process
+- **Monitor Attendance**: Track employee presence, remote work, and leave status
+- **Generate Reports**: Create data-driven insights about your workforce
+- **Manage Payroll**: Handle compensation and benefits administration
+- **Document Management**: Store and organize important HR documents
+- **Calendar Integration**: Track events, birthdays, anniversaries, and important dates
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Employee Management" icon="users">
+    Comprehensive employee profiles with personal information, job details, tenure tracking, and more. Search and filter across your entire workforce.
+  </Card>
+  
+  <Card title="Real-Time Dashboard" icon="chart-line">
+    Visual insights with headcount growth charts, department distribution, attendance metrics, and action items.
+  </Card>
+  
+  <Card title="Authentication & Security" icon="lock">
+    Secure token-based authentication with localStorage session management and protected routes.
+  </Card>
+  
+  <Card title="Modern UI Components" icon="palette">
+    Built with Radix UI and Tailwind CSS for a polished, accessible user experience.
+  </Card>
+</CardGroup>
+
+## Architecture Overview
+
+HCMatrix follows a modern Next.js architecture with the following structure:
+
+### Tech Stack
+
+- **Framework**: Next.js 16.1.6 with App Router
+- **UI Library**: React 19.2.4
+- **Language**: TypeScript 5.7.3
+- **Styling**: Tailwind CSS 4.2.0
+- **UI Components**: Radix UI primitives
+- **Charts**: Recharts 2.15.0
+- **Icons**: Lucide React
+- **Form Handling**: React Hook Form with Zod validation
+- **Analytics**: Vercel Analytics
+
+### Project Structure
+
+```
+source/
+├── app/                    # Next.js App Router pages
+│   ├── auth/login/        # Authentication pages
+│   ├── dashboard/         # Main dashboard
+│   ├── employees/         # Employee management
+│   ├── recruitment/       # Recruitment module
+│   ├── payroll/          # Payroll management
+│   ├── attendance/       # Attendance tracking
+│   ├── calendar/         # Events calendar
+│   ├── documents/        # Document management
+│   ├── reports/          # Reporting module
+│   └── settings/         # Application settings
+├── components/           # Reusable UI components
+│   ├── ui/              # Base UI components (buttons, inputs, etc.)
+│   ├── sidebar.tsx      # Navigation sidebar
+│   └── header.tsx       # Top header bar
+├── lib/                 # Utility libraries
+│   ├── auth.ts         # Authentication utilities
+│   └── api.ts          # API client and types
+└── package.json        # Project dependencies
+```
+
+### Authentication Flow
+
+HCMatrix uses a token-based authentication system:
+
+1. User logs in with email and password
+2. API returns JWT token and user data
+3. Session stored in localStorage
+4. Token sent with all subsequent API requests
+5. Automatic redirect to login if unauthenticated
+
+From `lib/auth.ts:1`:
+
+```typescript
+export interface AuthSession {
+  token: string
+  user: {
+    id: number
+    name: string
+    email: string
+  }
+}
+
+const SESSION_KEY = 'hcmatrix_session'
+
+export const auth = {
+  saveSession(session: AuthSession): void,
+  getSession(): AuthSession | null,
+  clearSession(): void,
+  isAuthenticated(): boolean,
+  getToken(): string | null
+}
+```
+
+### API Integration
+
+The platform uses a centralized API client that proxies requests through Next.js API routes to avoid CORS issues. All API calls are typed with TypeScript interfaces.
+
+From `lib/api.ts:64`:
+
+```typescript
+async function apiCall<T>(
+  endpoint: string,
+  method: 'GET' | 'POST' = 'GET',
+  body?: Record<string, unknown>,
+  token?: string
+): Promise<T> {
+  const url = `${PROXY_BASE}${endpoint}`
+  
+  const headers: HeadersInit = {
+    'Accept': 'application/json',
+  }
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  
+  // API request implementation...
+}
+```
+
+## What You Can Build
+
+With HCMatrix, you can:
+
+<Steps>
+  <Step title="Deploy a complete HR system">
+    Launch a full-featured HR management platform for your organization with minimal configuration.
+  </Step>
+  
+  <Step title="Customize workflows">
+    Extend the platform with custom modules for your specific HR processes and policies.
+  </Step>
+  
+  <Step title="Integrate with existing systems">
+    Connect HCMatrix to your payroll providers, benefits platforms, and other HR tools.
+  </Step>
+  
+  <Step title="Generate analytics">
+    Build custom reports and dashboards to gain insights into your workforce data.
+  </Step>
+</Steps>
+
+## Browser Support
+
+HCMatrix supports all modern browsers:
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get HCMatrix running in under 5 minutes
+  </Card>
+  
+  <Card title="Installation" icon="download" href="/installation">
+    Detailed setup and configuration guide
+  </Card>
+</CardGroup>

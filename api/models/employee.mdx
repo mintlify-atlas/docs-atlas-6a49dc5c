@@ -1,0 +1,360 @@
+---
+title: 'Employee Models'
+description: 'TypeScript interfaces for employee data structures'
+---
+
+## Employee
+
+Basic employee information returned by list and search endpoints.
+
+### Interface
+
+```typescript
+interface Employee {
+  id: number
+  name: string
+  email: string
+  job_title: string
+  department: string
+  location: string
+  employment_type: string
+  status: string
+  start_date: string
+  avatar?: string
+  [key: string]: any
+}
+```
+
+### Fields
+
+<ParamField path="id" type="number" required>
+  Employee's unique identifier
+</ParamField>
+
+<ParamField path="name" type="string" required>
+  Employee's full name. Mapped from `full_name` or `name` in raw API response.
+</ParamField>
+
+<ParamField path="email" type="string" required>
+  Employee's email address
+</ParamField>
+
+<ParamField path="job_title" type="string" required>
+  Employee's job title or position
+</ParamField>
+
+<ParamField path="department" type="string" required>
+  Department name (e.g., Engineering, Sales, Marketing)
+</ParamField>
+
+<ParamField path="location" type="string" required>
+  Office location or city
+</ParamField>
+
+<ParamField path="employment_type" type="string" required>
+  Employment type. Mapped from `employment_type` or `emp_type` in raw API response.
+  
+  Common values:
+  - `Full-time`
+  - `Part-time`
+  - `Contract`
+  - `Intern`
+</ParamField>
+
+<ParamField path="status" type="string" required>
+  Employment status
+  
+  Common values:
+  - `active`
+  - `inactive`
+  - `on_leave`
+</ParamField>
+
+<ParamField path="start_date" type="string" required>
+  Start date in ISO format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField path="avatar" type="string">
+  URL to employee's avatar image. Mapped from `image_url` or `avatar` in raw API response. Optional field.
+</ParamField>
+
+### Index Signature
+
+The interface includes an index signature `[key: string]: any` to allow additional fields from the API that may not be explicitly typed.
+
+### Example
+
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "job_title": "Software Engineer",
+  "department": "Engineering",
+  "location": "New York",
+  "employment_type": "Full-time",
+  "status": "active",
+  "start_date": "2023-01-15",
+  "avatar": "https://example.com/avatars/john-doe.jpg"
+}
+```
+
+### Usage
+
+```typescript
+import type { Employee } from '@/lib/api'
+
+function displayEmployee(employee: Employee) {
+  console.log(`${employee.name} - ${employee.job_title}`)
+  console.log(`${employee.department} | ${employee.location}`)
+  console.log(`Status: ${employee.status}`)
+}
+```
+
+## EmployeeDetail
+
+Extended employee information with personal details, salary, and emergency contact. Returned by the single employee endpoint.
+
+### Interface
+
+```typescript
+interface EmployeeDetail extends Employee {
+  phone: string
+  date_of_birth: string
+  address: string
+  salary: number
+  manager: string
+  manager_id: number
+  next_of_kin_name: string
+  next_of_kin_relationship: string
+  next_of_kin_phone: string
+  tenure_years: number
+  tenure_months: number
+  spouse: string | null
+}
+```
+
+### Additional Fields
+
+Includes all fields from `Employee` plus:
+
+<ParamField path="phone" type="string" required>
+  Employee's phone number. Mapped from `phone` or `phone_number` in raw API response.
+</ParamField>
+
+<ParamField path="date_of_birth" type="string" required>
+  Date of birth in ISO format (YYYY-MM-DD). Mapped from `dob` or `date_of_birth` in raw API response.
+</ParamField>
+
+<ParamField path="address" type="string" required>
+  Employee's home address
+</ParamField>
+
+<ParamField path="salary" type="number" required>
+  Current salary amount. Mapped from `current_salary` or `salary` in raw API response.
+</ParamField>
+
+<ParamField path="manager" type="string" required>
+  Manager's full name
+</ParamField>
+
+<ParamField path="manager_id" type="number" required>
+  Manager's employee ID for relational lookup
+</ParamField>
+
+<ParamField path="next_of_kin_name" type="string" required>
+  Next of kin full name. Mapped from `next_of_kin` or `next_of_kin_name` in raw API response.
+</ParamField>
+
+<ParamField path="next_of_kin_relationship" type="string" required>
+  Relationship to next of kin. Mapped from `next_of_kin_relationship` or `relationship` in raw API response.
+  
+  Common values:
+  - `Spouse`
+  - `Parent`
+  - `Sibling`
+  - `Child`
+  - `Friend`
+</ParamField>
+
+<ParamField path="next_of_kin_phone" type="string" required>
+  Next of kin phone number. Mapped from `phone_no_nok` or `next_of_kin_phone` in raw API response.
+</ParamField>
+
+<ParamField path="tenure_years" type="number" required>
+  Full years of employment with the company
+</ParamField>
+
+<ParamField path="tenure_months" type="number" required>
+  Additional months of employment beyond full years (0-11)
+</ParamField>
+
+<ParamField path="spouse" type="string | null" required>
+  Spouse's name, or null if not applicable
+</ParamField>
+
+### Example
+
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "job_title": "Senior Software Engineer",
+  "department": "Engineering",
+  "location": "New York",
+  "employment_type": "Full-time",
+  "status": "active",
+  "start_date": "2020-03-15",
+  "avatar": "https://example.com/avatars/john-doe.jpg",
+  "phone": "+1-555-123-4567",
+  "date_of_birth": "1990-05-20",
+  "address": "123 Main St, New York, NY 10001",
+  "salary": 125000,
+  "manager": "Jane Smith",
+  "manager_id": 5,
+  "next_of_kin_name": "Mary Doe",
+  "next_of_kin_relationship": "Spouse",
+  "next_of_kin_phone": "+1-555-987-6543",
+  "tenure_years": 5,
+  "tenure_months": 11,
+  "spouse": "Mary Doe"
+}
+```
+
+### Usage
+
+```typescript
+import type { EmployeeDetail } from '@/lib/api'
+
+function displayEmployeeProfile(employee: EmployeeDetail) {
+  console.log(`=== ${employee.name} ===`)
+  console.log(`\nContact:`)
+  console.log(`Email: ${employee.email}`)
+  console.log(`Phone: ${employee.phone}`)
+  console.log(`Address: ${employee.address}`)
+  
+  console.log(`\nEmployment:`)
+  console.log(`Title: ${employee.job_title}`)
+  console.log(`Department: ${employee.department}`)
+  console.log(`Manager: ${employee.manager}`)
+  console.log(`Salary: $${employee.salary.toLocaleString()}`)
+  console.log(`Tenure: ${employee.tenure_years}y ${employee.tenure_months}m`)
+  
+  console.log(`\nEmergency Contact:`)
+  console.log(`Name: ${employee.next_of_kin_name}`)
+  console.log(`Relationship: ${employee.next_of_kin_relationship}`)
+  console.log(`Phone: ${employee.next_of_kin_phone}`)
+}
+```
+
+## EmployeesResponse
+
+Paginated response containing an array of employees.
+
+### Interface
+
+```typescript
+interface EmployeesResponse {
+  data: Employee[]
+  current_page: number
+  per_page: number
+  total: number
+  next_page_url: string | null
+  prev_page_url: string | null
+}
+```
+
+### Fields
+
+<ParamField path="data" type="Employee[]" required>
+  Array of Employee objects
+</ParamField>
+
+<ParamField path="current_page" type="number" required>
+  Current page number (1-indexed)
+</ParamField>
+
+<ParamField path="per_page" type="number" required>
+  Number of items per page (typically 15)
+</ParamField>
+
+<ParamField path="total" type="number" required>
+  Total number of employees across all pages
+</ParamField>
+
+<ParamField path="next_page_url" type="string | null" required>
+  URL for the next page of results, or null if on the last page
+</ParamField>
+
+<ParamField path="prev_page_url" type="string | null" required>
+  URL for the previous page of results, or null if on the first page
+</ParamField>
+
+### Example
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "job_title": "Software Engineer",
+      "department": "Engineering",
+      "location": "New York",
+      "employment_type": "Full-time",
+      "status": "active",
+      "start_date": "2023-01-15"
+    }
+  ],
+  "current_page": 1,
+  "per_page": 15,
+  "total": 150,
+  "next_page_url": "/api/v1/employee?page=2",
+  "prev_page_url": null
+}
+```
+
+### Usage
+
+```typescript
+import type { EmployeesResponse } from '@/lib/api'
+
+function displayPaginationInfo(response: EmployeesResponse) {
+  const totalPages = Math.ceil(response.total / response.per_page)
+  
+  console.log(`Page ${response.current_page} of ${totalPages}`)
+  console.log(`Showing ${response.data.length} of ${response.total} employees`)
+  console.log(`Has next page: ${response.next_page_url !== null}`)
+  console.log(`Has previous page: ${response.prev_page_url !== null}`)
+}
+```
+
+## Field Mapping Reference
+
+The API client automatically maps raw API field names to standardized interface fields:
+
+### Employee Mapping
+
+| Interface Field | Raw API Fields |
+|----------------|----------------|
+| `name` | `full_name` or `name` |
+| `employment_type` | `employment_type` or `emp_type` |
+| `avatar` | `image_url` or `avatar` |
+
+### EmployeeDetail Additional Mapping
+
+| Interface Field | Raw API Fields |
+|----------------|----------------|
+| `phone` | `phone` or `phone_number` |
+| `date_of_birth` | `dob` or `date_of_birth` |
+| `salary` | `current_salary` or `salary` |
+| `next_of_kin_name` | `next_of_kin` or `next_of_kin_name` |
+| `next_of_kin_relationship` | `next_of_kin_relationship` or `relationship` |
+| `next_of_kin_phone` | `phone_no_nok` or `next_of_kin_phone` |
+
+## Related
+
+- [Employees List API](/api/employees) - Fetch employee lists
+- [Employee Details API](/api/employee-details) - Get detailed employee info

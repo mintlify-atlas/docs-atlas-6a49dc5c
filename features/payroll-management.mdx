@@ -1,0 +1,295 @@
+---
+title: "Payroll Management"
+description: "Streamline payroll processing with automated calculations, compliance tracking, and payment management"
+---
+
+## Overview
+
+The Payroll Management module in HCMatrix is designed to simplify and automate the complex process of employee compensation. From salary calculations to tax compliance, this feature handles all aspects of payroll processing.
+
+<Note>
+  The Payroll Management module is currently under development. Employee salary information is accessible through individual employee profiles in the Employee Management module.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Salary Management" icon="dollar-sign">
+    View and manage employee salaries with detailed compensation tracking
+  </Card>
+  <Card title="Payroll Processing" icon="calculator">
+    Automated calculation of wages, deductions, and net pay for each pay period
+  </Card>
+  <Card title="Tax Compliance" icon="file-invoice">
+    Ensure compliance with tax regulations and automated tax calculations
+  </Card>
+  <Card title="Payment Distribution" icon="money-bill-transfer">
+    Manage direct deposits, checks, and other payment methods
+  </Card>
+</CardGroup>
+
+## Current Salary Information
+
+### Employee Profile Integration
+
+Salary data is currently accessible through the Employee Detail view:
+
+```tsx
+// Source: ~/workspace/source/app/employees/[id]/page.tsx:261-268
+<div className="space-y-1">
+  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Current Salary</p>
+  <p className="text-xl font-black text-gray-900">
+    {employee.salary != null
+      ? `$ ${employee.salary.toLocaleString()}`
+      : 'N/A'}
+    <span className="text-[10px] font-bold text-gray-400 ml-1 uppercase">/ Year</span>
+  </p>
+</div>
+```
+
+### Salary Data Structure
+
+Employee salary information is part of the EmployeeDetail interface:
+
+```typescript
+// Source: ~/workspace/source/lib/api.ts:49-62
+export interface EmployeeDetail extends Employee {
+  phone: string
+  date_of_birth: string
+  address: string
+  salary: number  // Annual salary
+  manager: string
+  manager_id: number
+  next_of_kin_name: string
+  next_of_kin_relationship: string
+  next_of_kin_phone: string
+  tenure_years: number
+  tenure_months: number
+  spouse: string | null
+}
+```
+
+## Planned Features
+
+<Card title="Full Payroll Module" icon="briefcase">
+  A comprehensive payroll processing system is in development to handle all aspects of employee compensation management.
+</Card>
+
+### Payroll Processing
+
+**Pay Period Management:**
+- Configure pay schedules (weekly, bi-weekly, semi-monthly, monthly)
+- Set pay period start and end dates
+- Track pay period statuses (open, processing, closed)
+- Manage payroll calendars and deadlines
+
+**Earnings Calculation:**
+- Base salary/hourly wage calculation
+- Overtime pay computation
+- Bonuses and commissions
+- Shift differentials
+- Retroactive pay adjustments
+
+**Deductions & Withholdings:**
+- Federal income tax withholding
+- State and local tax withholding
+- Social Security and Medicare (FICA)
+- Retirement plan contributions (401k, IRA)
+- Health insurance premiums
+- Garnishments and child support
+- Other voluntary deductions
+
+### Tax Compliance
+
+**Tax Management:**
+- Automatic tax rate updates
+- W-4 form processing
+- Tax filing preparation
+- Quarterly tax reporting
+- Year-end W-2 generation
+- 1099 contractor payments
+
+**Compliance Features:**
+- Federal tax compliance (IRS)
+- State tax compliance (all 50 states)
+- Local tax jurisdiction handling
+- Labor law compliance tracking
+- Minimum wage enforcement
+- Overtime rule compliance (FLSA)
+
+### Payment Methods
+
+**Direct Deposit:**
+- Bank account verification
+- ACH payment processing
+- Split deposits to multiple accounts
+- Payment confirmation tracking
+
+**Check Printing:**
+- Physical check generation
+- Digital check images
+- Check reconciliation
+- Void and reissue capabilities
+
+**Pay Cards:**
+- Prepaid debit card integration
+- Instant payment availability
+- Fee management
+
+### Reporting & Analytics
+
+**Standard Reports:**
+- Payroll summary reports
+- Earnings and deductions statements
+- Tax liability reports
+- Labor cost analysis
+- Department/location payroll costs
+- Pay equity analysis
+
+**Custom Reports:**
+- Report builder with filters
+- Scheduled report generation
+- Export to Excel, PDF, CSV
+- Data visualization dashboards
+
+## Integration Capabilities
+
+### Attendance Integration
+
+Payroll will integrate with the Attendance Tracking module:
+
+- Import hours worked from time tracking
+- Calculate overtime automatically
+- Process paid time off (PTO)
+- Handle sick leave and vacation pay
+- Integrate with shift schedules
+
+### Employee Data Sync
+
+Automatic synchronization with employee records:
+
+```typescript
+// Salary data mapping from API
+function mapEmployeeDetail(raw: any): EmployeeDetail {
+  return {
+    // ... other fields
+    salary: raw.current_salary ?? raw.salary ?? 0,
+    employment_type: raw.employment_type || raw.emp_type || '',
+    start_date: raw.start_date || '',
+    // ... other fields
+  }
+}
+```
+
+### Accounting System Integration
+
+Planned integrations with accounting software:
+
+- QuickBooks integration
+- Xero synchronization
+- General ledger exports
+- Chart of accounts mapping
+- Automated journal entries
+
+## Payroll Workflows
+
+### Standard Payroll Process
+
+1. **Preparation Phase:**
+   - Review employee changes (new hires, terminations, raises)
+   - Import time and attendance data
+   - Verify hours worked and PTO used
+   - Update salary changes and bonuses
+
+2. **Processing Phase:**
+   - Calculate gross wages
+   - Apply pre-tax deductions
+   - Calculate federal, state, and local taxes
+   - Apply post-tax deductions
+   - Compute net pay
+
+3. **Review Phase:**
+   - Generate payroll reports
+   - Review for accuracy and anomalies
+   - Obtain management approval
+   - Make corrections if needed
+
+4. **Payment Phase:**
+   - Submit direct deposit file to bank
+   - Print checks for employees without direct deposit
+   - Distribute pay stubs (electronic or paper)
+   - Record payroll in accounting system
+
+5. **Post-Processing:**
+   - Reconcile payroll accounts
+   - File tax payments
+   - Update employee records
+   - Archive payroll records
+
+## Access Control
+
+The payroll module enforces strict authentication:
+
+```tsx
+// Source: ~/workspace/source/app/payroll/page.tsx:12-16
+useEffect(() => {
+  if (!auth.getToken()) {
+    router.push('/auth/login')
+  }
+}, [router])
+```
+
+## Best Practices
+
+<Tip>
+  **Regular Audits**: Conduct periodic payroll audits to ensure accuracy and compliance with tax regulations.
+</Tip>
+
+<Tip>
+  **Secure Data**: Payroll data is highly sensitive. Use role-based access controls to limit who can view and modify salary information.
+</Tip>
+
+<Tip>
+  **Backup Records**: Maintain secure backups of all payroll records for the required retention period (typically 3-7 years).
+</Tip>
+
+<Warning>
+  **Compliance Critical**: Payroll errors can result in significant penalties. Always verify calculations and ensure timely tax payments.
+</Warning>
+
+## Security Considerations
+
+**Data Protection:**
+- Encrypted storage of salary information
+- Secure transmission of payment data
+- Role-based access control (RBAC)
+- Audit logging of all payroll actions
+- Multi-factor authentication for payroll users
+
+**Regulatory Compliance:**
+- SOC 2 compliance for data security
+- GDPR compliance for European employees
+- CCPA compliance for California employees
+- PCI DSS compliance for payment processing
+
+## User Interface
+
+The payroll module will feature:
+
+- Intuitive dashboard with key metrics
+- Streamlined payroll run workflow
+- Employee-facing pay stub portal
+- Mobile-responsive design
+- Bulk action capabilities
+- Advanced filtering and sorting
+
+## Future Enhancements
+
+Planned improvements include:
+
+- **Global Payroll**: Support for international employees
+- **Contractor Payments**: 1099 contractor management
+- **Benefits Integration**: Link with benefits administration
+- **Garnishment Management**: Automated garnishment processing
+- **Multi-currency**: Support for multiple currencies
+- **AI-Powered Insights**: Predictive analytics for labor costs
